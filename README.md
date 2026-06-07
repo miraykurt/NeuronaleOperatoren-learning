@@ -1,13 +1,11 @@
-# Lerneinheit 3 — Neuronale Operatoren
+# Lerneinheit — Neuronale Operatoren
 
-Interaktive Lernumgebung zu **Fourier Neural Operators (FNO)** und **PDEBench**,
-eingebettet ins Szenario „FieldSolve Engineering". Teil einer Bachelor-Arbeit.
 
 ## Setup
 
 ```bash
 npm install
-echo "OPENAI_API_KEY=sk-DEIN-KEY" > .env   # oder Platzhalter → Fake-Antworten
+echo "OPENAI_API_KEY=sk-DEIN-KEY" > .env  
 npm run dev
 ```
 
@@ -29,6 +27,4 @@ npm start             # Express liefert API + dist/ unter :3000
 **Kapitel 1–5 fertig.** Kapitel 6–8 werden noch überarbeitet (Inhalte,
 Decisions, Notebook-Anbindung).
 
-## Stack
 
-Vite · React 18 · TypeScript · zustand · Express · OpenAI `gpt-4o-mini`
