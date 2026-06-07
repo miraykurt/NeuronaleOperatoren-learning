@@ -18,8 +18,8 @@ Vite proxyt `/api/*` automatisch an Express.
 
 ```bash
 npm install --omit=dev
-npm run build         # → ./dist/
-npm start             # Express liefert API + dist/ unter :3000
+npm run build       
+npm start             
 ```
 
 ## Stand
