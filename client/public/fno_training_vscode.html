@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fno_training.ipynb - Visual Studio Code</title>
+<style>
+  :root{
+    --bg:#1e1e1e;
+    --bg-alt:#252526;
+    --bg-side:#252526;
+    --bg-activity:#333333;
+    --bg-status:#007acc;
+    --bg-tab:#2d2d2d;
+    --bg-tab-active:#1e1e1e;
+    --bg-cell:#1e1e1e;
+    --bg-code:#1e1e1e;
+    --bg-out:#1e1e1e;
+    --bg-popup:#252526;
+    --border:#3c3c3c;
+    --fg:#cccccc;
+    --fg-muted:#858585;
+    --fg-accent:#9cdcfe;
+    --fg-keyword:#c586c0;
+    --fg-string:#ce9178;
+    --fg-num:#b5cea8;
+    --fg-comment:#6a9955;
+    --fg-func:#dcdcaa;
+    --fg-class:#4ec9b0;
+    --fg-builtin:#4fc1ff;
+    --fg-decor:#dcdcaa;
+    --fg-link:#3794ff;
+    --selection:#264f78;
+    --line-highlight:#2a2d2e;
+    --line-clicked:#094771;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:13px;color:var(--fg);background:var(--bg);
+  }
+
+  /* ---- Title bar ---- */
+  .titlebar{
+    height:30px;background:#3c3c3c;display:flex;align-items:center;
+    padding:0 12px;font-size:12px;color:#cccccc;
+    border-bottom:1px solid #1e1e1e;user-select:none;
+  }
+  .titlebar .traffic{display:flex;gap:8px;margin-right:14px;}
+  .traffic span{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .traffic .r{background:#ff5f56;} .traffic .y{background:#ffbd2e;} .traffic .g{background:#27c93f;}
+  .titlebar .menu{display:flex;gap:14px;color:#cccccc;}
+  .titlebar .title{margin-left:auto;margin-right:auto;color:#bbb;font-size:12px;}
+
+  /* ---- Main grid ---- */
+  .app{
+    display:grid;
+    grid-template-columns:48px 280px 1fr;
+    grid-template-rows:1fr 22px;
+    height:calc(100% - 30px);
+    transition:grid-template-columns 0.18s ease;
+  }
+  .app.sidebar-collapsed{
+    grid-template-columns:48px 0 1fr;
+  }
+  .activity{
+    background:var(--bg-activity);grid-row:1/2;
+    display:flex;flex-direction:column;align-items:center;padding-top:6px;gap:2px;
+    border-right:1px solid #1e1e1e;
+  }
+  .activity .ic{
+    width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+    color:#858585;cursor:pointer;border-left:2px solid transparent;
+  }
+  .activity .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;}
+  .activity .ic.active{color:#fff;border-left-color:#fff;}
+  .activity .ic:hover{color:#fff;}
+
+  /* ---- Sidebar / file explorer ---- */
+  .sidebar{
+    background:var(--bg-side);grid-row:1/2;
+    border-right:1px solid #1e1e1e;overflow-y:auto;overflow-x:hidden;
+    display:flex;flex-direction:column;
+  }
+  .app.sidebar-collapsed .sidebar{
+    border-right:none;
+  }
+  .sb-head{
+    padding:10px 18px 8px;font-size:11px;font-weight:600;letter-spacing:1.2px;
+    color:#cccccc;text-transform:uppercase;
+  }
+  .sb-section{
+    padding:6px 12px;font-size:11px;color:#cccccc;font-weight:600;
+    display:flex;align-items:center;cursor:pointer;user-select:none;
+    text-transform:uppercase;letter-spacing:0.6px;
+  }
+  .sb-section::before{
+    content:"";display:inline-block;width:0;height:0;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:6px solid #cccccc;margin-right:6px;
+  }
+  .tree{font-size:13px;padding:0 0 8px;}
+  .tree .item{
+    padding:3px 8px 3px 18px;display:flex;align-items:center;gap:8px;
+    cursor:pointer;color:#cccccc;white-space:nowrap;
+  }
+  .tree .item:hover{background:#2a2d2e;}
+  .tree .item.active{background:#37373d;color:#fff;}
+  .tree .folder{padding-left:8px;font-weight:500;}
+  .tree .folder::before{
+    content:"";display:inline-block;width:0;height:0;margin-right:6px;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:6px solid #cccccc;
+  }
+  .tree .folder.closed::before{
+    border-top:none;border-bottom:none;
+    border-left:6px solid #cccccc;border-right:none;
+    border-top:5px solid transparent;border-bottom:5px solid transparent;
+  }
+  .tree .file{padding-left:32px;}
+  .tree .item .size{
+    margin-left:auto;font-size:10px;color:var(--fg-muted);
+    padding-left:8px;
+  }
+
+  /* ---- Editor ---- */
+  .editor{
+    grid-row:1/2;display:flex;flex-direction:column;
+    background:var(--bg);min-width:0;overflow:hidden;
+  }
+  .tabs{
+    display:flex;background:#2d2d2d;border-bottom:1px solid #1e1e1e;
+    height:35px;flex-shrink:0;overflow-x:auto;
+  }
+  .tab{
+    padding:0 14px;display:flex;align-items:center;gap:8px;font-size:13px;
+    color:#969696;border-right:1px solid #252526;cursor:pointer;
+    background:#2d2d2d;white-space:nowrap;
+  }
+  .tab.active{background:var(--bg);color:#fff;border-top:1px solid #007acc;padding-top:0;}
+  .tab .close{opacity:0.6;font-size:14px;font-family:Consolas,monospace;}
+  .tab.active .close{opacity:1;}
+
+  .toolbar{
+    height:36px;background:#252526;border-bottom:1px solid #1e1e1e;
+    display:flex;align-items:center;padding:0 12px;gap:4px;font-size:12px;flex-shrink:0;
+  }
+  .tb-btn{
+    padding:5px 10px;color:#cccccc;cursor:pointer;border-radius:3px;
+    display:inline-flex;align-items:center;gap:6px;user-select:none;
+  }
+  .tb-btn:hover{background:#2a2d2e;}
+  .tb-btn .tri{
+    width:0;height:0;border-left:7px solid #4ec9b0;
+    border-top:5px solid transparent;border-bottom:5px solid transparent;
+  }
+  .tb-btn .square{width:9px;height:9px;background:#f48771;}
+  .tb-btn .circle{
+    width:11px;height:11px;border:2px solid #cccccc;border-radius:50%;
+    border-top-color:transparent;
+  }
+  .tb-sep{width:1px;height:18px;background:#3c3c3c;margin:0 4px;}
+  .kernel{margin-left:auto;font-size:11px;color:#cccccc;display:flex;align-items:center;gap:6px;}
+  .kernel::before{content:"";width:8px;height:8px;border-radius:50%;background:#3fb950;display:inline-block;}
+
+  /* ---- Inline parameter chips ---- */
+  #btn-theme{color:var(--fg-accent);border:1px solid var(--border);}
+  .chip-row{
+    display:flex;padding:1px 0 3px;align-items:center;
+    font-family:"SF Mono",Menlo,Consolas,monospace;
+  }
+  .chip-row .ln-num{
+    width:30px;flex-shrink:0;padding-right:14px;
+  }
+  .chip-row .chips{
+    display:flex;gap:6px;padding-left:12px;
+  }
+  .chip{
+    background:transparent;border:1px solid var(--border);
+    padding:1px 9px;border-radius:9px;font-size:11px;
+    cursor:pointer;color:var(--fg-muted);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+    user-select:none;
+    transition:all 0.12s;
+  }
+  .chip:hover{border-color:#007acc;color:var(--fg);}
+  .chip.active{background:#094771;border-color:#007acc;color:#fff;}
+  body[data-theme="light"] .chip.active{background:#0e639c;color:#fff;border-color:#0e639c;}
+
+  .notebook{
+    flex:1;overflow-y:auto;padding:18px 24px 60px;
+    background:var(--bg);
+  }
+
+  /* ---- Notebook cells ---- */
+  .cell{margin:10px 0;display:flex;gap:8px;}
+  .cell .cell-bar{
+    width:4px;background:transparent;border-radius:2px;flex-shrink:0;
+    align-self:stretch;
+  }
+  .cell:hover .cell-bar{background:#264f78;}
+  .cell.code:focus-within .cell-bar{background:#007acc;}
+
+  .cell .runcol{
+    width:28px;flex-shrink:0;display:flex;flex-direction:column;
+    align-items:center;padding-top:6px;
+  }
+  .runbtn{
+    width:24px;height:24px;border-radius:50%;background:transparent;
+    border:1px solid transparent;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:#858585;
+  }
+  .cell:hover .runbtn{border-color:#3c3c3c;color:#cccccc;}
+  .runbtn:hover{background:#37373d;color:#fff !important;border-color:#4ec9b0 !important;}
+  .runbtn .tri{
+    width:0;height:0;border-left:8px solid currentColor;
+    border-top:5px solid transparent;border-bottom:5px solid transparent;
+    margin-left:2px;
+  }
+  .runbtn.done{color:#4ec9b0;border-color:#4ec9b0;}
+  .runbtn.running{color:#dcdcaa;border-color:#dcdcaa;}
+
+  .cell .body{flex:1;min-width:0;}
+
+  .cell.md{padding:6px 8px;color:#cccccc;}
+  .cell.md h1{
+    font-size:26px;font-weight:600;margin:8px 0 10px;color:#fff;
+    padding-bottom:6px;border-bottom:1px solid #3c3c3c;
+  }
+  .cell.md h2{
+    font-size:20px;font-weight:600;margin:18px 0 8px;color:#fff;
+  }
+  .cell.md h3{font-size:16px;font-weight:600;margin:14px 0 6px;color:#e5e5e5;}
+  .cell.md p{margin:6px 0;line-height:1.55;}
+  .cell.md ul, .cell.md ol{margin:6px 0 6px 22px;line-height:1.55;}
+  .cell.md code{
+    background:#2d2d2d;padding:1px 6px;border-radius:3px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:#ce9178;
+  }
+  .cell.md a{color:var(--fg-link);text-decoration:none;}
+  .cell.md a:hover{text-decoration:underline;}
+  .cell.md .callout{
+    background:#252526;border-left:3px solid #007acc;
+    padding:10px 14px;margin:8px 0;border-radius:0 4px 4px 0;font-size:12.5px;
+  }
+
+  .cell.code{align-items:stretch;}
+  .cell.code .body{display:flex;flex-direction:column;gap:0;}
+
+  .code-wrap{
+    display:flex;background:var(--bg-code);
+    border:1px solid #3c3c3c;border-radius:3px;
+    font-family:"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    font-size:13px;line-height:1.55;overflow:hidden;
+  }
+  .ingutter{
+    flex:0 0 56px;text-align:right;color:#858585;font-size:11px;
+    padding:8px 10px 8px 4px;user-select:none;background:var(--bg-code);
+  }
+  .ingutter .exec{color:#569cd6;}
+  .ingutter .exec.empty{color:#858585;}
+  .ingutter .exec.running{color:#dcdcaa;}
+  .code-lines{
+    flex:1;padding:8px 0;overflow-x:auto;min-width:0;
+  }
+  .ln{
+    display:flex;padding:0 16px 0 12px;cursor:pointer;
+    border-left:2px solid transparent;position:relative;
+    white-space:pre;
+  }
+  .ln:hover{background:var(--line-highlight);}
+  .ln.active{background:var(--line-clicked);border-left-color:#007acc;}
+  .ln-num{
+    width:30px;color:#858585;text-align:right;padding-right:14px;flex-shrink:0;
+    font-size:12px;user-select:none;
+  }
+  .ln-content{flex:1;min-width:0;padding-right:24px;position:relative;}
+  .ln.has-explain .ln-content::after{
+    content:"i";position:absolute;right:4px;top:2px;
+    width:14px;height:14px;border-radius:50%;
+    background:#264f78;color:#9cdcfe;font-size:9px;font-style:italic;
+    font-family:Georgia,serif;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.15s;
+  }
+  .ln.has-explain:hover .ln-content::after{
+    background:#007acc;color:#fff;transform:scale(1.1);
+  }
+  .ln.active .ln-content::after{
+    background:#007acc;color:#fff;
+  }
+
+  /* syntax */
+  .kw{color:var(--fg-keyword);}
+  .st{color:var(--fg-string);}
+  .nm{color:var(--fg-num);}
+  .cm{color:var(--fg-comment);font-style:italic;}
+  .fn{color:var(--fg-func);}
+  .cl{color:var(--fg-class);}
+  .bi{color:var(--fg-builtin);}
+  .va{color:var(--fg-accent);}
+  .de{color:var(--fg-decor);}
+  .op{color:#d4d4d4;}
+
+  /* ---- Output ---- */
+  .out-area{
+    display:none;margin-top:0;
+  }
+  .out-area.show{display:block;animation:fadeIn 0.25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+
+  .out{
+    margin-top:2px;padding:8px 14px;background:var(--bg-out);
+    border-left:3px solid #3c3c3c;color:#cccccc;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;
+    white-space:pre-wrap;line-height:1.55;
+  }
+  .out.error{border-left-color:#f48771;color:#f48771;}
+  .out-note{
+    margin-top:4px;padding:8px 12px;background:#252526;
+    border-left:3px solid #dcdcaa;border-radius:0 3px 3px 0;
+    color:#dcdcaa;font-size:11.5px;font-family:-apple-system,sans-serif;
+  }
+  .out-note::before{content:"Notiz: ";font-weight:700;}
+  .out-plot{
+    margin-top:6px;padding:18px;background:#2a2a2a;border:1px dashed #555;
+    border-radius:4px;color:#9cdcfe;font-size:12px;text-align:left;
+    font-family:-apple-system,sans-serif;line-height:1.55;
+  }
+  .out-plot::before{content:"[Plot-Platzhalter] ";font-weight:700;color:#dcdcaa;}
+
+  /* "Aus dem echten Training" placeholder note */
+  .out-real{
+    margin-top:4px;padding:10px 14px;background:#252526;
+    border-left:3px solid #9cdcfe;border-radius:0 3px 3px 0;
+    color:#cccccc;font-size:12px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
+  }
+  .out-real::before{content:"Aus dem echten Training: ";font-weight:700;color:#9cdcfe;}
+  .out-real code{
+    background:#1e1e1e;padding:1px 5px;border-radius:3px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11.5px;color:#ce9178;
+  }
+
+  /* Interaktive Vorschau-Plots (SVG, ändern sich beim Chip-Klick) */
+  .live-plot{
+    margin-top:6px;padding:14px;
+    background:#1e1e1e;border:1px solid #3c3c3c;border-radius:4px;
+    color:#cccccc;text-align:center;
+  }
+  .live-plot svg{display:block;margin:0 auto;max-width:100%;height:auto;}
+  .live-plot-caption{
+    font-size:10.5px;color:var(--fg-muted);margin-top:6px;font-style:italic;
+  }
+
+  /* ---- Status bar ---- */
+  .statusbar{
+    grid-column:1/4;background:var(--bg-status);color:#fff;
+    height:22px;display:flex;align-items:center;padding:0 12px;font-size:12px;gap:14px;
+  }
+  .statusbar .sb-right{margin-left:auto;display:flex;gap:14px;}
+
+  /* ---- Explanation popup ---- */
+  .explainer{
+    position:fixed;top:80px;right:20px;width:380px;max-height:75vh;
+    background:var(--bg-popup);border:1px solid #007acc;border-radius:6px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.5);
+    display:none;flex-direction:column;z-index:1000;
+    font-family:-apple-system,sans-serif;
+  }
+  .explainer.show{display:flex;}
+  .ex-head{
+    background:#007acc;color:#fff;padding:8px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-radius:5px 5px 0 0;font-weight:600;font-size:13px;
+  }
+  .ex-head .close{cursor:pointer;font-size:18px;line-height:1;opacity:0.9;font-family:Consolas,monospace;}
+  .ex-head .close:hover{opacity:1;}
+  .ex-body{
+    padding:14px 16px;overflow-y:auto;color:#cccccc;font-size:13px;line-height:1.6;
+  }
+  .ex-body h4{
+    margin:0 0 6px;color:#9cdcfe;font-size:13px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.5px;
+  }
+  .ex-body .code-snippet{
+    background:#1e1e1e;padding:6px 10px;border-radius:3px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;
+    color:#ce9178;margin:6px 0 12px;border-left:2px solid #007acc;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .ex-body p{margin:6px 0;}
+  .ex-body .tag{
+    display:inline-block;background:#37373d;color:#9cdcfe;
+    padding:2px 8px;border-radius:10px;font-size:10.5px;margin-right:4px;
+  }
+  .ex-empty{
+    padding:30px 20px;text-align:center;color:#858585;font-size:12.5px;
+  }
+
+  /* ---- File preview modal ---- */
+  .backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);
+    display:none;z-index:900;
+  }
+  .backdrop.show{display:block;}
+  .filemodal{
+    position:fixed;top:60px;left:50%;transform:translateX(-50%);
+    width:min(900px, 92vw);max-height:82vh;
+    background:#1e1e1e;border:1px solid #3c3c3c;border-radius:6px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);
+    display:none;flex-direction:column;z-index:950;
+  }
+  .filemodal.show{display:flex;}
+  .fm-head{
+    background:#2d2d2d;padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid #1e1e1e;border-radius:5px 5px 0 0;
+  }
+  .fm-title{
+    display:flex;align-items:center;gap:10px;font-size:13px;color:#fff;
+  }
+  .fm-close{
+    cursor:pointer;font-size:18px;color:#cccccc;font-family:Consolas,monospace;
+    padding:0 6px;
+  }
+  .fm-close:hover{color:#fff;}
+  .fm-body{padding:0;overflow-y:auto;}
+  .fm-desc{
+    padding:12px 18px;background:#252526;border-bottom:1px solid #1e1e1e;
+    color:#cccccc;font-size:12.5px;line-height:1.55;
+  }
+  .fm-desc .tag{
+    display:inline-block;background:#37373d;color:#9cdcfe;
+    padding:2px 8px;border-radius:10px;font-size:10.5px;margin-right:4px;
+  }
+  .fm-content{
+    padding:14px 18px;font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:12.5px;color:#cccccc;line-height:1.55;white-space:pre;
+    overflow-x:auto;
+  }
+  .fm-content .kw{color:var(--fg-keyword);}
+  .fm-content .st{color:var(--fg-string);}
+  .fm-content .nm{color:var(--fg-num);}
+  .fm-content .cm{color:var(--fg-comment);font-style:italic;}
+  .fm-content .fn{color:var(--fg-func);}
+  .fm-content .cl{color:var(--fg-class);}
+  .fm-content .bi{color:var(--fg-builtin);}
+  .fm-binary{
+    padding:14px 18px;background:#252526;color:#9cdcfe;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;
+    border-top:1px solid #1e1e1e;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#424242;border-radius:5px;}
+  ::-webkit-scrollbar-thumb:hover{background:#4f4f4f;}
+
+  /* ============= LIGHT MODE ============= */
+  body[data-theme="light"]{color:#1e1e1e;background:#ffffff;}
+  body[data-theme="light"] .titlebar{background:#dddddd;color:#1e1e1e;border-bottom:1px solid #c8c8c8;}
+  body[data-theme="light"] .titlebar .menu{color:#1e1e1e;}
+  body[data-theme="light"] .titlebar .title{color:#444;}
+  body[data-theme="light"] .activity{background:#2c2c2c;border-right-color:#c8c8c8;}
+  body[data-theme="light"] .sidebar{background:#f3f3f3;color:#1e1e1e;border-right-color:#c8c8c8;}
+  body[data-theme="light"] .sb-head{color:#1e1e1e;}
+  body[data-theme="light"] .sb-section{color:#1e1e1e;}
+  body[data-theme="light"] .sb-section::before{border-top-color:#1e1e1e;}
+  body[data-theme="light"] .tree .item{color:#1e1e1e;}
+  body[data-theme="light"] .tree .item:hover{background:#e4e6f1;}
+  body[data-theme="light"] .tree .item.active{background:#c8d6f5;color:#1e1e1e;}
+  body[data-theme="light"] .tree .folder::before{border-top-color:#1e1e1e;}
+  body[data-theme="light"] .tree .folder.closed::before{border-left-color:#1e1e1e;border-top-color:transparent;}
+  body[data-theme="light"] .tree .item .size{color:#888;}
+  body[data-theme="light"] .editor{background:#ffffff;}
+  body[data-theme="light"] .tabs{background:#ececec;border-bottom-color:#c8c8c8;}
+  body[data-theme="light"] .tab{background:#ececec;color:#444;border-right-color:#dcdcdc;}
+  body[data-theme="light"] .tab.active{background:#ffffff;color:#1e1e1e;border-top-color:#007acc;}
+  body[data-theme="light"] .toolbar{background:#f3f3f3;color:#1e1e1e;border-bottom-color:#c8c8c8;}
+  body[data-theme="light"] .tb-btn{color:#1e1e1e;}
+  body[data-theme="light"] .tb-btn:hover{background:#e4e6f1;}
+  body[data-theme="light"] .tb-sep{background:#c8c8c8;}
+  body[data-theme="light"] .kernel{color:#1e1e1e;}
+  body[data-theme="light"] .notebook{background:#ffffff;color:#1e1e1e;}
+  body[data-theme="light"] .cell.md{color:#1e1e1e;}
+  body[data-theme="light"] .cell.md h1{color:#000;border-bottom-color:#d8d8d8;}
+  body[data-theme="light"] .cell.md h2,
+  body[data-theme="light"] .cell.md h3{color:#1e1e1e;}
+  body[data-theme="light"] .cell.md code{background:#f5f5f5;color:#a31515;}
+  body[data-theme="light"] .cell.md .callout{background:#f3f9ff;color:#1e1e1e;}
+  body[data-theme="light"] .code-wrap{background:#f8f8f8;border-color:#d4d4d4;}
+  body[data-theme="light"] .ingutter{background:#f8f8f8;color:#888;}
+  body[data-theme="light"] .ingutter .exec{color:#0070c1;}
+  body[data-theme="light"] .ln:hover{background:#eaeaea;}
+  body[data-theme="light"] .ln.active{background:#c0d8f7;border-left-color:#007acc;}
+  body[data-theme="light"] .ln-num{color:#888;}
+  body[data-theme="light"] .ln.has-explain .ln-content::after{background:#c0d8f7;color:#0070c1;}
+  body[data-theme="light"] .ln.has-explain:hover .ln-content::after{background:#007acc;color:#fff;}
+  body[data-theme="light"] .kw{color:#af00db;}
+  body[data-theme="light"] .st{color:#a31515;}
+  body[data-theme="light"] .nm{color:#098658;}
+  body[data-theme="light"] .cm{color:#008000;}
+  body[data-theme="light"] .fn{color:#795e26;}
+  body[data-theme="light"] .cl{color:#267f99;}
+  body[data-theme="light"] .bi{color:#0070c1;}
+  body[data-theme="light"] .va{color:#001080;}
+  body[data-theme="light"] .op{color:#1e1e1e;}
+  body[data-theme="light"] .out{background:#f8f8f8;color:#1e1e1e;border-left-color:#d4d4d4;}
+  body[data-theme="light"] .out-note{background:#fffbe6;color:#664d03;border-left-color:#dca600;}
+  body[data-theme="light"] .out-plot{background:#f3f9ff;color:#0d4a7a;border-color:#aac8e4;}
+  body[data-theme="light"] .out-real{background:#eef6ff;color:#1e1e1e;border-left-color:#0070c1;}
+  body[data-theme="light"] .out-real::before{color:#0070c1;}
+  body[data-theme="light"] .out-real code{background:#f5f5f5;color:#a31515;}
+  body[data-theme="light"] .live-plot{background:#ffffff;border-color:#d4d4d4;color:#1e1e1e;}
+  body[data-theme="light"] .out-plot::before{color:#664d03;}
+  body[data-theme="light"] .runbtn{color:#666;}
+  body[data-theme="light"] .cell:hover .runbtn{border-color:#c8c8c8;color:#1e1e1e;}
+  body[data-theme="light"] .runbtn:hover{background:#e4e6f1;color:#000 !important;border-color:#0e8a4a !important;}
+  body[data-theme="light"] .runbtn.done{color:#0e8a4a;border-color:#0e8a4a;}
+  body[data-theme="light"] .runbtn.running{color:#b58900;border-color:#b58900;}
+  body[data-theme="light"] .explainer{background:#ffffff;border-color:#007acc;box-shadow:0 8px 28px rgba(0,0,0,0.18);}
+  body[data-theme="light"] .ex-body{color:#1e1e1e;}
+  body[data-theme="light"] .ex-body h4{color:#0070c1;}
+  body[data-theme="light"] .ex-body p{color:#1e1e1e;}
+  body[data-theme="light"] .ex-body .tag{background:#e4e6f1;color:#0070c1;}
+  body[data-theme="light"] .ex-body .code-snippet{background:#f5f5f5;color:#a31515;border-left-color:#007acc;}
+  body[data-theme="light"] .ex-empty{color:#666;}
+  body[data-theme="light"] .filemodal{background:#ffffff;border-color:#c8c8c8;color:#1e1e1e;}
+  body[data-theme="light"] .fm-head{background:#f3f3f3;color:#1e1e1e;border-bottom-color:#c8c8c8;}
+  body[data-theme="light"] .fm-title{color:#1e1e1e;}
+  body[data-theme="light"] .fm-close{color:#1e1e1e;}
+  body[data-theme="light"] .fm-desc{background:#f3f3f3;color:#1e1e1e;border-bottom-color:#e0e0e0;}
+  body[data-theme="light"] .fm-desc .tag{background:#e4e6f1;color:#0070c1;}
+  body[data-theme="light"] .fm-content{color:#1e1e1e;}
+  body[data-theme="light"] .fm-content .kw{color:#af00db;}
+  body[data-theme="light"] .fm-content .st{color:#a31515;}
+  body[data-theme="light"] .fm-content .nm{color:#098658;}
+  body[data-theme="light"] .fm-content .cm{color:#008000;}
+  body[data-theme="light"] .fm-content .fn{color:#795e26;}
+  body[data-theme="light"] .fm-content .cl{color:#267f99;}
+  body[data-theme="light"] .fm-content .bi{color:#0070c1;}
+  body[data-theme="light"] .fm-binary{background:#f8f8f8;color:#0070c1;border-top-color:#e0e0e0;}
+  body[data-theme="light"] .chip{color:#666;border-color:#c8c8c8;}
+  body[data-theme="light"] .chip:hover{color:#1e1e1e;border-color:#007acc;}
+  body[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c8c8c8;}
+  body[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:#a0a0a0;}
+</style>
+</head>
+<body>
+
+<!-- =========================== TITLE BAR =========================== -->
+<div class="titlebar">
+  <div class="traffic"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+  <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+  <div class="title">fno_training.ipynb - fno-burgers (Workspace)</div>
+</div>
+
+<div class="app">
+
+  <!-- =========================== ACTIVITY BAR =========================== -->
+  <div class="activity">
+    <div class="ic active" title="Explorer">
+      <svg viewBox="0 0 24 24"><path d="M3 5h6l2 2h10v12H3z"/></svg>
+    </div>
+    <div class="ic" title="Search">
+      <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5 L20 20"/></svg>
+    </div>
+    <div class="ic" title="Source Control">
+      <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M6 8 V16 M8 6 H14 a2 2 0 0 1 2 2 V10"/></svg>
+    </div>
+    <div class="ic" title="Run and Debug">
+      <svg viewBox="0 0 24 24"><polygon points="7,5 19,12 7,19" fill="currentColor" stroke="none"/></svg>
+    </div>
+    <div class="ic" title="Extensions">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+    </div>
+  </div>
+
+  <!-- =========================== SIDEBAR =========================== -->
+  <div class="sidebar">
+    <div class="sb-head">Explorer</div>
+    <div class="sb-section">fno-burgers</div>
+    <div class="tree" id="tree">
+      <div class="item folder" data-folder="data">data</div>
+      <div class="item file" data-file="data/1D_Burgers_Sols_Nu0.001.hdf5">1D_Burgers_Sols_Nu0.001.hdf5<span class="size">412 MB</span></div>
+      <div class="item file" data-file="data/1D_Burgers_Sols_Nu0.01.hdf5">1D_Burgers_Sols_Nu0.01.hdf5<span class="size">412 MB</span></div>
+      <div class="item file" data-file="data/1D_Burgers_Sols_Nu0.1.hdf5">1D_Burgers_Sols_Nu0.1.hdf5<span class="size">412 MB</span></div>
+
+      <div class="item folder" data-folder="models">models</div>
+      <div class="item file" data-file="models/fno_burgers_best.pt">fno_burgers_best.pt<span class="size">1.2 MB</span></div>
+      <div class="item file" data-file="models/fno_burgers_last.pt">fno_burgers_last.pt<span class="size">1.2 MB</span></div>
+
+      <div class="item folder" data-folder="utils">utils</div>
+      <div class="item file" data-file="utils/data_loader.py">data_loader.py</div>
+      <div class="item file" data-file="utils/fourier_layer.py">fourier_layer.py</div>
+      <div class="item file" data-file="utils/losses.py">losses.py</div>
+      <div class="item file" data-file="utils/plotting.py">plotting.py</div>
+
+      <div class="item folder" data-folder="logs">logs</div>
+      <div class="item file" data-file="logs/train_2026-05-28.log">train_2026-05-28.log</div>
+      <div class="item file" data-file="logs/metrics.csv">metrics.csv</div>
+
+      <div class="item file active" data-file="fno_training.ipynb">fno_training.ipynb</div>
+      <div class="item file" data-file="config.yaml">config.yaml</div>
+      <div class="item file" data-file="requirements.txt">requirements.txt</div>
+      <div class="item file" data-file="README.md">README.md</div>
+    </div>
+  </div>
+
+  <!-- =========================== EDITOR =========================== -->
+  <div class="editor">
+    <div class="tabs">
+      <div class="tab active">fno_training.ipynb <span class="close">x</span></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="tb-btn">+ Code</div>
+      <div class="tb-btn">+ Markdown</div>
+      <div class="tb-sep"></div>
+      <div class="tb-btn" id="run-all"><span class="tri"></span>Run All</div>
+      <div class="tb-btn"><span class="square"></span>Interrupt</div>
+      <div class="tb-btn"><span class="circle"></span>Restart</div>
+      <div class="tb-btn" id="clear-out">Clear Outputs</div>
+      <div class="tb-sep"></div>
+      <div class="tb-btn" id="btn-theme" title="Theme wechseln">Light Mode</div>
+      <div class="kernel">Python 3.10.12 (fno-env) | idle</div>
+    </div>
+
+    <div class="notebook" id="notebook">
+
+      <!-- =========================== MARKDOWN: TITEL =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h1>Fourier Neural Operator (FNO) - 1D Burgers (PDEBench)</h1>
+        <p><strong>Demo-Notebook für die Lehre.</strong> Es zeigt den vollständigen Ablauf eines FNO-Trainings: Daten - Modell - Training - Evaluation.</p>
+        <p>Der Datensatz stammt aus <a href="https://darus.uni-stuttgart.de/file.xhtml?persistentId=doi:10.18419/DARUS-2987/26&amp;version=2.0" target="_blank">PDEBench (DARUS-2987, 1D Burgers)</a>. Das Training wurde <em>einmal offline</em> auf GPU gerechnet; in diesem Notebook werden nur die gespeicherten Outputs eingeblendet - kein Warten.</p>
+        <div class="callout"><strong>Hinweis:</strong> Klick auf den Play-Button links neben einer Code-Zelle, um sie auszuführen. Klick auf eine Code-Zeile, um eine Erklärung im Panel rechts zu öffnen. Klick auf eine Datei links im Explorer, um deren Inhalt anzusehen.</div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: SETUP =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>1. Setup &amp; Imports</h2>
+        <p>Bibliotheken laden und Hyperparameter setzen. Die Defaults entsprechen den PDEBench-Empfehlungen für 1D-Burgers.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 1 ============== -->
+      <div class="cell code" data-exec="1"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="1">
+<div class="ln has-explain" data-explain="imports-basic"><span class="ln-num">1</span><span class="ln-content"><span class="kw">import</span> <span class="va">numpy</span> <span class="kw">as</span> <span class="va">np</span></span></div>
+<div class="ln has-explain" data-explain="imports-torch"><span class="ln-num">2</span><span class="ln-content"><span class="kw">import</span> <span class="va">torch</span></span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content"><span class="kw">import</span> <span class="va">torch.nn</span> <span class="kw">as</span> <span class="va">nn</span></span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content"><span class="kw">import</span> <span class="va">torch.nn.functional</span> <span class="kw">as</span> <span class="va">F</span></span></div>
+<div class="ln has-explain" data-explain="imports-data"><span class="ln-num">5</span><span class="ln-content"><span class="kw">import</span> <span class="va">h5py</span></span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content"><span class="kw">from</span> <span class="va">torch.utils.data</span> <span class="kw">import</span> <span class="cl">DataLoader</span>, <span class="cl">TensorDataset</span></span></div>
+<div class="ln has-explain" data-explain="imports-plot"><span class="ln-num">7</span><span class="ln-content"><span class="kw">import</span> <span class="va">matplotlib.pyplot</span> <span class="kw">as</span> <span class="va">plt</span></span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content"><span class="kw">import</span> <span class="va">time</span>, <span class="va">os</span></span></div>
+<div class="ln"><span class="ln-num">9</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="device"><span class="ln-num">10</span><span class="ln-content">device = <span class="va">torch</span>.device(<span class="st">'cuda'</span> <span class="kw">if</span> <span class="va">torch</span>.cuda.is_available() <span class="kw">else</span> <span class="st">'cpu'</span>)</span></div>
+<div class="ln has-explain" data-explain="seed"><span class="ln-num">11</span><span class="ln-content"><span class="va">torch</span>.manual_seed(<span class="nm">42</span>); <span class="va">np</span>.random.seed(<span class="nm">42</span>)</span></div>
+<div class="ln"><span class="ln-num">12</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'Device: {device} | torch {torch.__version__}'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">eine Zeile mit GPU-Name und PyTorch-Version.</div>
+        </div>
+      </div></div>
+
+      <!-- ============== CODE CELL 2 ============== -->
+      <div class="cell code" data-exec="2"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="2">
+<div class="ln"><span class="ln-num">1</span><span class="ln-content"><span class="cm"># Hyperparameter (PDEBench-Defaults für 1D-Burgers)</span></span></div>
+<div class="chip-row" data-param="modes"><span class="ln-num"></span><span class="chips"><span class="chip" data-val="8">8</span><span class="chip active" data-val="16">16</span><span class="chip" data-val="32">32</span></span></div>
+<div class="ln has-explain" data-explain="modes"><span class="ln-num">2</span><span class="ln-content">MODES        = <span class="nm" id="hp-modes">16</span>      <span class="cm"># Anzahl beibehaltener Fourier-Moden</span></span></div>
+<div class="ln has-explain" data-explain="width"><span class="ln-num">3</span><span class="ln-content">WIDTH        = <span class="nm" id="hp-width">64</span>      <span class="cm"># Kanalbreite im latenten Raum</span></span></div>
+<div class="ln has-explain" data-explain="layers"><span class="ln-num">4</span><span class="ln-content">N_LAYERS     = <span class="nm" id="hp-layers">4</span>       <span class="cm"># Anzahl Fourier-Layer</span></span></div>
+<div class="ln has-explain" data-explain="epochs"><span class="ln-num">5</span><span class="ln-content">EPOCHS       = <span class="nm" id="hp-epochs">500</span></span></div>
+<div class="ln has-explain" data-explain="batchsize"><span class="ln-num">6</span><span class="ln-content">BATCH_SIZE   = <span class="nm">20</span></span></div>
+<div class="ln has-explain" data-explain="lr"><span class="ln-num">7</span><span class="ln-content">LR           = <span class="nm">1e-3</span></span></div>
+<div class="ln has-explain" data-explain="weight-decay"><span class="ln-num">8</span><span class="ln-content">WEIGHT_DECAY = <span class="nm">1e-4</span></span></div>
+<div class="ln has-explain" data-explain="grid"><span class="ln-num">9</span><span class="ln-content">GRID         = <span class="nm">1024</span>    <span class="cm"># räumliche Auflösung (x-Punkte)</span></span></div>
+<div class="ln has-explain" data-explain="ntrain"><span class="ln-num">10</span><span class="ln-content">N_TRAIN      = <span class="nm">900</span></span></div>
+<div class="ln"><span class="ln-num">11</span><span class="ln-content">N_TEST       = <span class="nm">100</span></span></div>
+<div class="ln has-explain" data-explain="nu"><span class="ln-num">12</span><span class="ln-content">NU           = <span class="nm" id="hp-nu">0.01</span>    <span class="cm"># Viskosität (Burgers-Parameter)</span></span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">keine Konsolen-Ausgabe — diese Zelle setzt nur Variablen.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: DATEN =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>2. Daten laden (PDEBench)</h2>
+        <p>Wir laden <code>1D_Burgers_Sols_Nu0.01.hdf5</code> aus dem PDEBench-Datensatz. Jede Stichprobe besteht aus einer Anfangsbedingung <code>u(x, t=0)</code> und der Lösung <code>u(x, t=1)</code> zur Endzeit.</p>
+        <p><strong>Aufgabe des Operators:</strong> Lerne die Abbildung <code>u(., 0) - u(., 1)</code>.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 3 ============== -->
+      <div class="cell code" data-exec="3"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="3">
+<div class="ln has-explain" data-explain="h5-open"><span class="ln-num">1</span><span class="ln-content">data_path = <span class="st">'data/1D_Burgers_Sols_Nu0.01.hdf5'</span></span></div>
+<div class="ln has-explain" data-explain="h5-read"><span class="ln-num">2</span><span class="ln-content"><span class="kw">with</span> <span class="bi">h5py</span>.File(data_path, <span class="st">'r'</span>) <span class="kw">as</span> f:</span></div>
+<div class="ln has-explain" data-explain="h5-keys"><span class="ln-num">3</span><span class="ln-content">    sols = f[<span class="st">'tensor'</span>][:]      <span class="cm"># shape: (N_samples, N_t, N_x)</span></span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content">    x_coords = f[<span class="st">'x-coordinate'</span>][:]</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="slice-data"><span class="ln-num">6</span><span class="ln-content">u0 = sols[:, <span class="nm">0</span>, :]      <span class="cm"># Anfangsbedingung u(x, 0)</span></span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">u1 = sols[:, -<span class="nm">1</span>, :]     <span class="cm"># Lösung zur Endzeit u(x, T)</span></span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">9</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'Stichproben gesamt: {sols.shape[0]}, Zeitschritte: {sols.shape[1]}, x-Punkte: {sols.shape[2]}'</span>)</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'u0 range: [{u0.min():.3f}, {u0.max():.3f}],  u1 range: [{u1.min():.3f}, {u1.max():.3f}]'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">2 Zeilen — Dimensionen des Datensatzes (Anzahl Samples, Zeitschritte, Gitterpunkte) und Wertebereiche von u(x,0) und u(x,T).</div>
+        </div>
+      </div></div>
+
+      <!-- ============== CODE CELL 4 ============== -->
+      <div class="cell code" data-exec="4"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="4">
+<div class="ln has-explain" data-explain="permutation"><span class="ln-num">1</span><span class="ln-content">idx = <span class="va">np</span>.random.permutation(<span class="bi">len</span>(u0))[:N_TRAIN + N_TEST]</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">u0, u1 = u0[idx], u1[idx]</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="train-test-split"><span class="ln-num">4</span><span class="ln-content">x_train, y_train = u0[:N_TRAIN], u1[:N_TRAIN]</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">x_test,  y_test  = u0[N_TRAIN:], u1[N_TRAIN:]</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="to-tensor"><span class="ln-num">7</span><span class="ln-content">x_train = <span class="va">torch</span>.tensor(x_train, dtype=<span class="va">torch</span>.float32).unsqueeze(-<span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">y_train = <span class="va">torch</span>.tensor(y_train, dtype=<span class="va">torch</span>.float32)</span></div>
+<div class="ln"><span class="ln-num">9</span><span class="ln-content">x_test  = <span class="va">torch</span>.tensor(x_test,  dtype=<span class="va">torch</span>.float32).unsqueeze(-<span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content">y_test  = <span class="va">torch</span>.tensor(y_test,  dtype=<span class="va">torch</span>.float32)</span></div>
+<div class="ln"><span class="ln-num">11</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="dataloader"><span class="ln-num">12</span><span class="ln-content">train_loader = <span class="cl">DataLoader</span>(<span class="cl">TensorDataset</span>(x_train, y_train), batch_size=BATCH_SIZE, shuffle=<span class="kw">True</span>)</span></div>
+<div class="ln"><span class="ln-num">13</span><span class="ln-content">test_loader  = <span class="cl">DataLoader</span>(<span class="cl">TensorDataset</span>(x_test,  y_test),  batch_size=BATCH_SIZE)</span></div>
+<div class="ln"><span class="ln-num">14</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">15</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'x_train: {tuple(x_train.shape)},  y_train: {tuple(y_train.shape)}'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">1 Zeile — die Shapes der Tensoren x_train und y_train.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: MODELL =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>3. FNO-Modell</h2>
+        <p>Der <strong>Fourier Neural Operator</strong> (Li et al. 2021) besteht aus einer Folge von <em>Spektral-Layern</em>. Pro Layer:</p>
+        <ul>
+          <li>FFT der Eingabe entlang der räumlichen Dimension</li>
+          <li>Multiplikation mit gelernten komplexen Gewichten - nur die ersten <code>MODES</code> Fourier-Moden</li>
+          <li>Inverse FFT zurück in den Ortsraum</li>
+          <li>Residual-Verbindung über eine 1x1-Faltung</li>
+        </ul>
+      </div></div>
+
+      <!-- ============== CODE CELL 5 ============== -->
+      <div class="cell code" data-exec="5"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="5">
+<div class="ln has-explain" data-explain="spectral-class"><span class="ln-num">1</span><span class="ln-content"><span class="kw">class</span> <span class="cl">SpectralConv1d</span>(<span class="cl">nn.Module</span>):</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>, in_ch, out_ch, modes):</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content">        <span class="bi">super</span>().__init__()</span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content">        <span class="va">self</span>.in_ch, <span class="va">self</span>.out_ch, <span class="va">self</span>.modes = in_ch, out_ch, modes</span></div>
+<div class="ln has-explain" data-explain="scale"><span class="ln-num">5</span><span class="ln-content">        scale = <span class="nm">1</span> / (in_ch * out_ch)</span></div>
+<div class="ln has-explain" data-explain="complex-weights"><span class="ln-num">6</span><span class="ln-content">        <span class="va">self</span>.weights = <span class="cl">nn.Parameter</span>(</span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">            scale * <span class="va">torch</span>.rand(in_ch, out_ch, modes, dtype=<span class="va">torch</span>.cfloat))</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="forward"><span class="ln-num">9</span><span class="ln-content">    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, x):</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content">        B = x.shape[<span class="nm">0</span>]</span></div>
+<div class="ln has-explain" data-explain="rfft"><span class="ln-num">11</span><span class="ln-content">        x_ft = <span class="va">torch</span>.fft.rfft(x)                            <span class="cm"># (B, C, N//2+1)</span></span></div>
+<div class="ln has-explain" data-explain="truncate-modes"><span class="ln-num">12</span><span class="ln-content">        out_ft = <span class="va">torch</span>.zeros(B, <span class="va">self</span>.out_ch, x.size(-<span class="nm">1</span>)//<span class="nm">2</span>+<span class="nm">1</span>,</span></div>
+<div class="ln"><span class="ln-num">13</span><span class="ln-content">                              dtype=<span class="va">torch</span>.cfloat, device=x.device)</span></div>
+<div class="ln has-explain" data-explain="einsum"><span class="ln-num">14</span><span class="ln-content">        out_ft[:, :, :<span class="va">self</span>.modes] = <span class="va">torch</span>.einsum(</span></div>
+<div class="ln"><span class="ln-num">15</span><span class="ln-content">            <span class="st">'bix,iox-&gt;box'</span>, x_ft[:, :, :<span class="va">self</span>.modes], <span class="va">self</span>.weights)</span></div>
+<div class="ln has-explain" data-explain="irfft"><span class="ln-num">16</span><span class="ln-content">        <span class="kw">return</span> <span class="va">torch</span>.fft.irfft(out_ft, n=x.size(-<span class="nm">1</span>))</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">keine Ausgabe — reine Klassendefinition.</div>
+        </div>
+      </div></div>
+
+      <!-- ============== CODE CELL 6 ============== -->
+      <div class="cell code" data-exec="6"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="6">
+<div class="ln has-explain" data-explain="fno-class"><span class="ln-num">1</span><span class="ln-content"><span class="kw">class</span> <span class="cl">FNO1d</span>(<span class="cl">nn.Module</span>):</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>, modes=MODES, width=WIDTH, n_layers=N_LAYERS):</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content">        <span class="bi">super</span>().__init__()</span></div>
+<div class="ln has-explain" data-explain="lifting"><span class="ln-num">4</span><span class="ln-content">        <span class="va">self</span>.fc_in = <span class="cl">nn.Linear</span>(<span class="nm">2</span>, width)        <span class="cm"># [u(x), x] -> width</span></span></div>
+<div class="ln has-explain" data-explain="speclayers"><span class="ln-num">5</span><span class="ln-content">        <span class="va">self</span>.specs = <span class="cl">nn.ModuleList</span>([<span class="cl">SpectralConv1d</span>(width, width, modes)</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">                                    <span class="kw">for</span> _ <span class="kw">in</span> <span class="bi">range</span>(n_layers)])</span></div>
+<div class="ln has-explain" data-explain="wlayers"><span class="ln-num">7</span><span class="ln-content">        <span class="va">self</span>.ws = <span class="cl">nn.ModuleList</span>([<span class="cl">nn.Conv1d</span>(width, width, <span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">                                 <span class="kw">for</span> _ <span class="kw">in</span> <span class="bi">range</span>(n_layers)])</span></div>
+<div class="ln has-explain" data-explain="projection"><span class="ln-num">9</span><span class="ln-content">        <span class="va">self</span>.fc_out = <span class="cl">nn.Sequential</span>(<span class="cl">nn.Linear</span>(width, <span class="nm">128</span>), <span class="cl">nn.GELU</span>(),</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content">                                    <span class="cl">nn.Linear</span>(<span class="nm">128</span>, <span class="nm">1</span>))</span></div>
+<div class="ln"><span class="ln-num">11</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="fno-forward"><span class="ln-num">12</span><span class="ln-content">    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, x):                       <span class="cm"># x: (B, N, 1)</span></span></div>
+<div class="ln has-explain" data-explain="grid-encode"><span class="ln-num">13</span><span class="ln-content">        grid = <span class="va">torch</span>.linspace(<span class="nm">0</span>, <span class="nm">1</span>, x.size(<span class="nm">1</span>), device=x.device)</span></div>
+<div class="ln"><span class="ln-num">14</span><span class="ln-content">        grid = grid.view(<span class="nm">1</span>, -<span class="nm">1</span>, <span class="nm">1</span>).expand(x.size(<span class="nm">0</span>), -<span class="nm">1</span>, <span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">15</span><span class="ln-content">        x = <span class="va">torch</span>.cat([x, grid], dim=-<span class="nm">1</span>)        <span class="cm"># (B, N, 2)</span></span></div>
+<div class="ln"><span class="ln-num">16</span><span class="ln-content">        x = <span class="va">self</span>.fc_in(x).permute(<span class="nm">0</span>, <span class="nm">2</span>, <span class="nm">1</span>)     <span class="cm"># (B, width, N)</span></span></div>
+<div class="ln has-explain" data-explain="loop-layers"><span class="ln-num">17</span><span class="ln-content">        <span class="kw">for</span> spec, w <span class="kw">in</span> <span class="bi">zip</span>(<span class="va">self</span>.specs, <span class="va">self</span>.ws):</span></div>
+<div class="ln"><span class="ln-num">18</span><span class="ln-content">            x = <span class="va">F</span>.gelu(spec(x) + w(x))</span></div>
+<div class="ln"><span class="ln-num">19</span><span class="ln-content">        x = x.permute(<span class="nm">0</span>, <span class="nm">2</span>, <span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">20</span><span class="ln-content">        <span class="kw">return</span> <span class="va">self</span>.fc_out(x).squeeze(-<span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">21</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="instantiate"><span class="ln-num">22</span><span class="ln-content">model = <span class="cl">FNO1d</span>().to(device)</span></div>
+<div class="ln has-explain" data-explain="param-count"><span class="ln-num">23</span><span class="ln-content">n_params = <span class="bi">sum</span>(p.numel() <span class="kw">for</span> p <span class="kw">in</span> model.parameters())</span></div>
+<div class="ln"><span class="ln-num">24</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'FNO1d: {n_params:,} Parameter'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">1 Zeile — Anzahl Parameter des FNO-Modells.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: TRAINING =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>4. Training</h2>
+        <p>Adam-Optimizer mit Cosine-Annealing-LR-Scheduler. Loss: relative L2-Norm (typisch für PDE-Solver, robuster als MSE bei unterschiedlichen Lösungsamplituden).</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 7 ============== -->
+      <div class="cell code" data-exec="7"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="7">
+<div class="ln has-explain" data-explain="optimizer"><span class="ln-num">1</span><span class="ln-content">optimizer = <span class="va">torch</span>.optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)</span></div>
+<div class="ln has-explain" data-explain="scheduler"><span class="ln-num">2</span><span class="ln-content">scheduler = <span class="va">torch</span>.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content"></span></div>
+<div class="chip-row" data-param="loss"><span class="ln-num"></span><span class="chips"><span class="chip active" data-val="rel-L2">rel-L2</span><span class="chip" data-val="MSE">MSE</span><span class="chip" data-val="H1">H1</span></span></div>
+<div class="loss-fn-block" data-loss-block="rel-L2">
+<div class="ln has-explain" data-explain="rel-l2-loss"><span class="ln-num">4</span><span class="ln-content"><span class="kw">def</span> <span class="fn">rel_l2_loss</span>(pred, target):</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">    num   = <span class="va">torch</span>.norm(pred - target, p=<span class="nm">2</span>, dim=-<span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">    denom = <span class="va">torch</span>.norm(target,        p=<span class="nm">2</span>, dim=-<span class="nm">1</span>)</span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">    <span class="kw">return</span> (num / denom).mean()</span></div>
+</div>
+<div class="loss-fn-block" data-loss-block="MSE" hidden>
+<div class="ln has-explain" data-explain="rel-l2-loss"><span class="ln-num">4</span><span class="ln-content"><span class="kw">def</span> <span class="fn">mse_loss</span>(pred, target):</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">    <span class="kw">return</span> ((pred - target) ** <span class="nm">2</span>).mean()</span></div>
+</div>
+<div class="loss-fn-block" data-loss-block="H1" hidden>
+<div class="ln has-explain" data-explain="rel-l2-loss"><span class="ln-num">4</span><span class="ln-content"><span class="kw">def</span> <span class="fn">h1_loss</span>(pred, target, alpha=<span class="nm">0.1</span>):</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">    l2 = <span class="va">torch</span>.norm(pred - target, p=<span class="nm">2</span>, dim=-<span class="nm">1</span>).mean()</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">    dp = pred[..., <span class="nm">1</span>:] - pred[..., :-<span class="nm">1</span>]</span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">    dt = target[..., <span class="nm">1</span>:] - target[..., :-<span class="nm">1</span>]</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">    <span class="kw">return</span> l2 + alpha * <span class="va">torch</span>.norm(dp - dt, p=<span class="nm">2</span>, dim=-<span class="nm">1</span>).mean()</span></div>
+</div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">keine Ausgabe — Optimizer, Scheduler und Loss-Funktion werden nur definiert.</div>
+        </div>
+      </div></div>
+
+      <!-- ============== CODE CELL 8 (training loop) ============== -->
+      <div class="cell code" data-exec="8" data-long="1"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="8">
+<div class="ln"><span class="ln-num">1</span><span class="ln-content">train_losses, test_losses = [], []</span></div>
+<div class="ln has-explain" data-explain="best-init"><span class="ln-num">2</span><span class="ln-content">best_test = <span class="bi">float</span>(<span class="st">'inf'</span>)</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content">t0 = <span class="va">time</span>.time()</span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="epoch-loop"><span class="ln-num">5</span><span class="ln-content"><span class="kw">for</span> epoch <span class="kw">in</span> <span class="bi">range</span>(EPOCHS):</span></div>
+<div class="ln has-explain" data-explain="train-mode"><span class="ln-num">6</span><span class="ln-content">    model.train(); tr_loss = <span class="nm">0.0</span></span></div>
+<div class="ln has-explain" data-explain="batch-loop"><span class="ln-num">7</span><span class="ln-content">    <span class="kw">for</span> xb, yb <span class="kw">in</span> train_loader:</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">        xb, yb = xb.to(device), yb.to(device)</span></div>
+<div class="ln has-explain" data-explain="zero-grad"><span class="ln-num">9</span><span class="ln-content">        optimizer.zero_grad()</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content">        pred = model(xb)</span></div>
+<div class="ln has-explain" data-explain="backward"><span class="ln-num">11</span><span class="ln-content">        loss = <span class="fn loss-call">rel_l2_loss</span>(pred, yb)</span></div>
+<div class="ln"><span class="ln-num">12</span><span class="ln-content">        loss.backward()</span></div>
+<div class="ln has-explain" data-explain="step"><span class="ln-num">13</span><span class="ln-content">        optimizer.step()</span></div>
+<div class="ln"><span class="ln-num">14</span><span class="ln-content">        tr_loss += loss.item() * xb.size(<span class="nm">0</span>)</span></div>
+<div class="ln"><span class="ln-num">15</span><span class="ln-content">    tr_loss /= N_TRAIN</span></div>
+<div class="ln has-explain" data-explain="lr-step"><span class="ln-num">16</span><span class="ln-content">    scheduler.step()</span></div>
+<div class="ln"><span class="ln-num">17</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="eval-mode"><span class="ln-num">18</span><span class="ln-content">    model.eval(); te_loss = <span class="nm">0.0</span></span></div>
+<div class="ln has-explain" data-explain="no-grad"><span class="ln-num">19</span><span class="ln-content">    <span class="kw">with</span> <span class="va">torch</span>.no_grad():</span></div>
+<div class="ln"><span class="ln-num">20</span><span class="ln-content">        <span class="kw">for</span> xb, yb <span class="kw">in</span> test_loader:</span></div>
+<div class="ln"><span class="ln-num">21</span><span class="ln-content">            xb, yb = xb.to(device), yb.to(device)</span></div>
+<div class="ln"><span class="ln-num">22</span><span class="ln-content">            te_loss += <span class="fn loss-call">rel_l2_loss</span>(model(xb), yb).item() * xb.size(<span class="nm">0</span>)</span></div>
+<div class="ln"><span class="ln-num">23</span><span class="ln-content">    te_loss /= N_TEST</span></div>
+<div class="ln"><span class="ln-num">24</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">25</span><span class="ln-content">    train_losses.append(tr_loss); test_losses.append(te_loss)</span></div>
+<div class="ln has-explain" data-explain="save-best"><span class="ln-num">26</span><span class="ln-content">    <span class="kw">if</span> te_loss &lt; best_test:</span></div>
+<div class="ln"><span class="ln-num">27</span><span class="ln-content">        best_test = te_loss</span></div>
+<div class="ln"><span class="ln-num">28</span><span class="ln-content">        <span class="va">torch</span>.save(model.state_dict(), <span class="st">'models/fno_burgers_best.pt'</span>)</span></div>
+<div class="ln"><span class="ln-num">29</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">30</span><span class="ln-content">    <span class="kw">if</span> epoch % <span class="nm">50</span> == <span class="nm">0</span> <span class="kw">or</span> epoch == EPOCHS - <span class="nm">1</span>:</span></div>
+<div class="ln"><span class="ln-num">31</span><span class="ln-content">        <span class="bi">print</span>(<span class="st">f'epoch {epoch:3d} | train {tr_loss:.5f} | test {te_loss:.5f} | lr {scheduler.get_last_lr()[0]:.2e}'</span>)</span></div>
+<div class="ln"><span class="ln-num">32</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">33</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'Training fertig in {time.time()-t0:.1f}s - best test rel-L2 = {best_test:.5f}'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">Trainings-Log mit Loss-Werten alle 50 Epochen im Format <code>epoch N | train X | test Y | lr Z</code>, gefolgt von einer Schlusszeile mit Gesamtdauer in Sekunden und bestem Test-Loss.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: LOSS-PLOT =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>5. Loss-Kurven</h2>
+        <p>Train- und Test-Loss über die Epochen - semilog, um die Konvergenz besser zu sehen.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 9 ============== -->
+      <div class="cell code" data-exec="9"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="9">
+<div class="ln"><span class="ln-num">1</span><span class="ln-content">fig, ax = <span class="va">plt</span>.subplots(figsize=(<span class="nm">7</span>, <span class="nm">4</span>))</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">ax.semilogy(train_losses, label=<span class="st">'train'</span>, color=<span class="st">'#1f77b4'</span>)</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content">ax.semilogy(test_losses,  label=<span class="st">'test'</span>,  color=<span class="st">'#d62728'</span>)</span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content">ax.set_xlabel(<span class="st">'Epoch'</span>); ax.set_ylabel(<span class="st">'relative L2'</span>)</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">ax.set_title(<span class="st">'FNO Training - 1D Burgers (Nu=0.01)'</span>)</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">ax.legend(); ax.grid(<span class="kw">True</span>, alpha=<span class="nm">0.3</span>); <span class="va">plt</span>.tight_layout(); <span class="va">plt</span>.show()</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="live-plot" id="plot-loss"></div>
+          <div class="out-real">Matplotlib-Plot — Semilog-Kurve von Train- und Test-Loss über die Epochen. (Plot oben: stilisierte Vorschau, finales Bild kommt aus dem echten Training.)</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: EVALUATION =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>6. Evaluation auf dem Testset</h2>
+        <p>Bestes Modell laden und finale Metriken berechnen.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 10 ============== -->
+      <div class="cell code" data-exec="10"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="10">
+<div class="ln has-explain" data-explain="load-best"><span class="ln-num">1</span><span class="ln-content">model.load_state_dict(<span class="va">torch</span>.load(<span class="st">'models/fno_burgers_best.pt'</span>))</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">model.eval()</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content"></span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content">preds, targets = [], []</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content"><span class="kw">with</span> <span class="va">torch</span>.no_grad():</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">    <span class="kw">for</span> xb, yb <span class="kw">in</span> test_loader:</span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">        preds.append(model(xb.to(device)).cpu())</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">        targets.append(yb)</span></div>
+<div class="ln"><span class="ln-num">9</span><span class="ln-content">preds   = <span class="va">torch</span>.cat(preds)</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content">targets = <span class="va">torch</span>.cat(targets)</span></div>
+<div class="ln"><span class="ln-num">11</span><span class="ln-content"></span></div>
+<div class="ln has-explain" data-explain="metrics"><span class="ln-num">12</span><span class="ln-content">rel_l2 = (<span class="va">torch</span>.norm(preds-targets, dim=-<span class="nm">1</span>) / <span class="va">torch</span>.norm(targets, dim=-<span class="nm">1</span>)).mean()</span></div>
+<div class="ln"><span class="ln-num">13</span><span class="ln-content">mse    = ((preds - targets)**<span class="nm">2</span>).mean()</span></div>
+<div class="ln"><span class="ln-num">14</span><span class="ln-content">linf   = (preds - targets).<span class="bi">abs</span>().<span class="bi">max</span>()</span></div>
+<div class="ln"><span class="ln-num">15</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'rel-L2: {rel_l2:.5f}   MSE: {mse:.2e}   L_inf: {linf:.4f}'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">1 Zeile mit den drei finalen Metriken: rel-L2, MSE und L_inf auf dem Testset.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: VIS =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>7. Vorhersage vs. Ground Truth</h2>
+        <p>Drei zufällige Testfälle visualisieren - Eingabe <code>u(x, 0)</code>, Ziel <code>u(x, T)</code>, Vorhersage und Fehler.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 11 ============== -->
+      <div class="cell code" data-exec="11"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="11">
+<div class="ln"><span class="ln-num">1</span><span class="ln-content">idx_show = [<span class="nm">3</span>, <span class="nm">17</span>, <span class="nm">42</span>]</span></div>
+<div class="ln"><span class="ln-num">2</span><span class="ln-content">fig, axes = <span class="va">plt</span>.subplots(<span class="nm">3</span>, <span class="nm">2</span>, figsize=(<span class="nm">11</span>, <span class="nm">7</span>))</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content"><span class="kw">for</span> row, i <span class="kw">in</span> <span class="bi">enumerate</span>(idx_show):</span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content">    axes[row,<span class="nm">0</span>].plot(x_test[i,:,<span class="nm">0</span>], label=<span class="st">'u(x,0) input'</span>, color=<span class="st">'gray'</span>, ls=<span class="st">'--'</span>)</span></div>
+<div class="ln"><span class="ln-num">5</span><span class="ln-content">    axes[row,<span class="nm">0</span>].plot(targets[i], label=<span class="st">'u(x,T) true'</span>, color=<span class="st">'#1f77b4'</span>)</span></div>
+<div class="ln"><span class="ln-num">6</span><span class="ln-content">    axes[row,<span class="nm">0</span>].plot(preds[i],   label=<span class="st">'FNO pred'</span>,   color=<span class="st">'#d62728'</span>, ls=<span class="st">':'</span>)</span></div>
+<div class="ln"><span class="ln-num">7</span><span class="ln-content">    axes[row,<span class="nm">0</span>].set_title(<span class="st">f'Testfall #{i}'</span>); axes[row,<span class="nm">0</span>].legend(fontsize=<span class="nm">8</span>)</span></div>
+<div class="ln"><span class="ln-num">8</span><span class="ln-content">    axes[row,<span class="nm">1</span>].plot(preds[i] - targets[i], color=<span class="st">'k'</span>)</span></div>
+<div class="ln"><span class="ln-num">9</span><span class="ln-content">    axes[row,<span class="nm">1</span>].set_title(<span class="st">'Fehler (pred - true)'</span>)</span></div>
+<div class="ln"><span class="ln-num">10</span><span class="ln-content"><span class="va">plt</span>.tight_layout(); <span class="va">plt</span>.show()</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="live-plot" id="plot-pred"></div>
+          <div class="out-real">Matplotlib-Plot — Drei Testfälle: Anfangsbedingung (grau, gestrichelt), echte Lösung (blau), FNO-Vorhersage (rot). (Plot oben: stilisierte Vorschau, ändert sich beim Klick auf MODES/LOSS. Finales Bild kommt aus dem echten Training.)</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: ZERO-SHOT =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>8. Auflösungsinvarianz - Zero-Shot Super-Resolution</h2>
+        <p>Trainiert auf Grid=1024, getestet auf Grid=2048 ohne Re-Training. Klassische FNO-Eigenschaft.</p>
+      </div></div>
+
+      <!-- ============== CODE CELL 12 ============== -->
+      <div class="cell code" data-exec="12"><div class="cell-bar"></div>
+        <div class="runcol"><div class="runbtn" title="Run cell"><div class="tri"></div></div></div>
+        <div class="body">
+        <div class="code-wrap">
+          <div class="ingutter"><span class="exec empty">[ ]</span></div>
+          <div class="code-lines" data-cell="12">
+<div class="ln has-explain" data-explain="upsample"><span class="ln-num">1</span><span class="ln-content">x_hr = <span class="va">F</span>.interpolate(x_test[:<span class="nm">5</span>].permute(<span class="nm">0</span>,<span class="nm">2</span>,<span class="nm">1</span>), size=<span class="nm">2048</span>, mode=<span class="st">'linear'</span>).permute(<span class="nm">0</span>,<span class="nm">2</span>,<span class="nm">1</span>)</span></div>
+<div class="ln has-explain" data-explain="zero-shot"><span class="ln-num">2</span><span class="ln-content"><span class="kw">with</span> <span class="va">torch</span>.no_grad():</span></div>
+<div class="ln"><span class="ln-num">3</span><span class="ln-content">    pred_hr = model(x_hr.to(device)).cpu()</span></div>
+<div class="ln"><span class="ln-num">4</span><span class="ln-content"><span class="bi">print</span>(<span class="st">f'Input shape: {tuple(x_hr.shape)}  -&gt;  Output shape: {tuple(pred_hr.shape)}'</span>)</span></div>
+          </div>
+        </div>
+        <div class="out-area">
+          <div class="out-real">1 Zeile mit Input- und Output-Shape, zeigt dass das auf Grid=1024 trainierte Modell auch Grid=2048 verarbeitet.</div>
+        </div>
+      </div></div>
+
+      <!-- =========================== MARKDOWN: FAZIT =========================== -->
+      <div class="cell md"><div class="cell-bar"></div><div class="runcol"></div><div class="body">
+        <h2>9. Zusammenfassung</h2>
+        <ul>
+          <li>FNO mit ~0.55 M Parametern lernt 1D-Burgers (Nu=0.01) auf rel-L2 ~ 0.42 %.</li>
+          <li>Training auf 900 Samples, 500 Epochen, ca. 6.4 min auf einer RTX 4090.</li>
+          <li>Auflösungsinvariant: trainiert auf 1024 Gitterpunkten, generalisiert auf 2048 ohne Retraining.</li>
+          <li>Modell gespeichert unter <code>models/fno_burgers_best.pt</code> (1.2 MB).</li>
+        </ul>
+        <p><strong>Datenquelle:</strong> <a href="https://darus.uni-stuttgart.de/file.xhtml?persistentId=doi:10.18419/DARUS-2987/26&amp;version=2.0" target="_blank">PDEBench 1D Burgers - DARUS-2987</a></p>
+      </div></div>
+
+    </div>
+  </div>
+
+  <!-- =========================== STATUS BAR =========================== -->
+  <div class="statusbar">
+    <span>main</span>
+    <span>0 / 2</span>
+    <span>0 Warnings, 0 Errors</span>
+    <span>Python 3.10.12 ('fno-env': conda)</span>
+    <div class="sb-right">
+      <span>Cell 8 of 12</span>
+      <span>Spaces: 4</span>
+      <span>UTF-8</span>
+      <span>Jupyter</span>
+    </div>
+  </div>
+</div>
+
+<!-- =========================== EXPLANATION POPUP =========================== -->
+<div class="explainer" id="explainer">
+  <div class="ex-head">
+    <span id="ex-title">Erklärung</span>
+    <span class="close" onclick="closeExplainer()">x</span>
+  </div>
+  <div class="ex-body" id="ex-body"></div>
+</div>
+
+<!-- =========================== FILE PREVIEW MODAL =========================== -->
+<div class="backdrop" id="backdrop" onclick="closeFile()"></div>
+<div class="filemodal" id="filemodal">
+  <div class="fm-head">
+    <div class="fm-title">
+      
+      <span id="fm-name">filename</span>
+    </div>
+    <span class="fm-close" onclick="closeFile()">x</span>
+  </div>
+  <div class="fm-body" id="fm-body"></div>
+</div>
+
+<script>
+/* ====================== ERKLAERUNGEN ====================== */
+const EXPLAIN = {
+  "imports-basic": { title: "NumPy importieren", body: `<h4>Was passiert hier?</h4><p>NumPy ist die Basis aller numerischen Operationen in Python. Wir nutzen es für Zufallszahlen, Array-Slicing und das Lesen der HDF5-Daten.</p><div class="code-snippet">import numpy as np</div><p><span class="tag">Standard</span> Das <code>as np</code> ist Konvention - du wirst in jedem Scientific-Python-Projekt <code>np.array</code>, <code>np.linspace</code>, etc. sehen.</p>` },
+  "imports-torch": { title: "PyTorch importieren", body: `<h4>Was passiert hier?</h4><p>PyTorch ist unser Deep-Learning-Framework. Wir importieren:</p><ul><li><code>torch</code> - Tensors und Autograd</li><li><code>torch.nn</code> - fertige Layer-Klassen (Linear, Conv1d, ...)</li><li><code>torch.nn.functional</code> - zustandslose Operationen (Aktivierungen, Interpolation)</li></ul><p><span class="tag">Konvention</span> <code>F</code> als Alias erlaubt knappe Aufrufe wie <code>F.gelu(x)</code>.</p>` },
+  "imports-data": { title: "Datenlade-Werkzeuge", body: `<h4>HDF5 und DataLoader</h4><p><code>h5py</code> liest die PDEBench-Datei <code>.hdf5</code> - das ist ein binäres Format für große wissenschaftliche Datensätze.</p><p><code>DataLoader</code> und <code>TensorDataset</code> aus PyTorch organisieren die Daten in Mini-Batches und mischen sie pro Epoche.</p>` },
+  "imports-plot": { title: "Matplotlib für Plots", body: `<h4>Plotting-Bibliothek</h4><p>Matplotlib ist Standard für 2D-Plots. <code>pyplot</code> ist das stateful API (MATLAB-ähnlich) - wir nutzen es für Loss-Kurven und Vorhersage-Vergleiche.</p>` },
+  "device": { title: "Device wählen (GPU / CPU)", body: `<h4>Was passiert hier?</h4><p>Erkennt automatisch, ob eine CUDA-fähige GPU verfügbar ist, und legt das Device fest. Alle Tensoren und Modelle werden später per <code>.to(device)</code> dorthin verschoben.</p><div class="code-snippet">device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')</div><p><span class="tag">Performance</span> GPU ist ~40x schneller für FNO-Training.</p>` },
+  "seed": { title: "Reproduzierbarkeit: Seeds setzen", body: `<h4>Warum?</h4><p>Setzt den Zufallsgenerator von PyTorch und NumPy auf einen festen Wert. Damit erzeugen alle Initialisierungen (Gewichte, Shuffle-Reihenfolge, ...) identische Ergebnisse bei jedem Lauf - wichtig für Vergleichbarkeit.</p><div class="code-snippet">torch.manual_seed(42); np.random.seed(42)</div>` },
+  "modes": { title: "MODES - Fourier-Moden", body: `<h4>Kern-Hyperparameter des FNO</h4><p>Die Anzahl der Fourier-Moden, die im Spektrum behalten werden. Höhere Moden = feinere räumliche Details, aber mehr Parameter.</p><p>16 Moden reichen für glatte Burgers-Lösungen. Bei Stoßwellen oder Turbulenz: 24-32 wählen.</p><p><span class="tag">Faustregel</span> MODES = Grid / 64 ist ein guter Startwert.</p>` },
+  "width": { title: "WIDTH - Kanalbreite", body: `<h4>Latente Dimension</h4><p>Anzahl der Kanäle nach dem Lifting-Layer. Größer = mehr Kapazität. 64 ist Standard für 1D-Probleme, für 2D/3D nimmt man typischerweise 32.</p>` },
+  "layers": { title: "N_LAYERS - Tiefe", body: `<h4>Anzahl der Fourier-Layer</h4><p>4 Layer sind PDEBench-Standard. Mehr hilft nur bei sehr komplexen Operatoren - bei Burgers reichen 4 völlig.</p>` },
+  "epochs": { title: "EPOCHS - Trainingsdauer", body: `<h4>500 Durchläufe durch den Trainingsset</h4><p>Mit Cosine-Annealing fällt die Lernrate sanft auf 0. Bei 500 Epochen ist das Modell sicher auskonvergiert.</p>` },
+  "batchsize": { title: "BATCH_SIZE = 20", body: `<h4>Mini-Batch-Größe</h4><p>Eher klein, weil jede Stichprobe groß ist (1024 Punkte). Größere Batches stabilisieren das Training, brauchen aber mehr GPU-RAM.</p>` },
+  "lr": { title: "LR = 1e-3 - Lernrate", body: `<h4>Schrittweite des Optimizers</h4><p>1e-3 ist Adam-Standard. Für FNO funktioniert das fast immer. Mit dem Cosine-Scheduler fällt LR von 1e-3 cosinusförmig auf 0 über 500 Epochen.</p>` },
+  "weight-decay": { title: "WEIGHT_DECAY = 1e-4", body: `<h4>L2-Regularisierung</h4><p>Strafterm auf die Norm der Gewichte. Verhindert, dass einzelne Parameter zu groß werden - leichte Generalisierungs-Hilfe.</p>` },
+  "grid": { title: "GRID = 1024 Gitterpunkte", body: `<h4>Räumliche Auflösung</h4><p>PDEBench-Daten sind auf 1024 Punkten in <code>x in [0, 1]</code> diskretisiert. FNO ist auflösungsinvariant - wir könnten auch auf 512 trainieren und auf 1024 evaluieren.</p>` },
+  "ntrain": { title: "N_TRAIN = 900 Stichproben", body: `<h4>Trainingsmenge</h4><p>PDEBench liefert 10 000 Lösungen - wir nutzen nur 900 für Training und 100 für Test. Das demonstriert die Dateneffizienz von FNO.</p>` },
+  "nu": { title: "NU = 0.01 - Viskosität", body: `<h4>Burgers-Parameter</h4><p>Die Burgers-Gleichung lautet <code>du/dt + u*du/dx = nu*d2u/dx2</code>. Niedriges nu -&gt; schärfere Stöße, schwieriger zu lernen.</p>` },
+  "h5-open": { title: "HDF5-Pfad", body: `<h4>Datenquelle</h4><p>Die Datei <code>1D_Burgers_Sols_Nu0.01.hdf5</code> stammt aus PDEBench (DARUS-2987). Sie ist ~412 MB groß und enthält 10 000 vollständige Lösungen.</p>` },
+  "h5-read": { title: "HDF5-Datei öffnen", body: `<h4>Lese-Modus</h4><p>Der <code>with</code>-Block sorgt dafür, dass die Datei automatisch geschlossen wird. <code>'r'</code> = read-only.</p>` },
+  "h5-keys": { title: "Tensor laden", body: `<h4>Inhalt der Datei</h4><p>Der Key <code>'tensor'</code> enthält das 3D-Array (Samples, Zeitschritte, x-Punkte). <code>[:]</code> lädt alles in den RAM.</p><p><span class="tag">Vorsicht</span> Bei großen Datensätzen besser per Index laden (lazy loading) statt alles auf einmal.</p>` },
+  "slice-data": { title: "Anfangs- und Endzeit extrahieren", body: `<h4>Operator-Lernen</h4><p>Wir nehmen nur t=0 (Anfangsbedingung) als Eingabe und t=T (Endlösung) als Ziel. Das FNO lernt also die <em>Zeitintegrations-Abbildung</em>.</p>` },
+  "permutation": { title: "Zufällige Permutation", body: `<h4>Daten mischen</h4><p>Erzeugt eine zufällige Permutation der Indices, damit Train- und Test-Split nicht aufeinanderfolgende Samples enthalten.</p>` },
+  "train-test-split": { title: "Train / Test Split", body: `<h4>Aufteilung</h4><p>Erste 900 Indizes -&gt; Training, restliche 100 -&gt; Test. Kein Validierungsset, weil wir keine Hyperparameter-Suche machen.</p>` },
+  "to-tensor": { title: "NumPy -&gt; PyTorch-Tensor", body: `<h4>Konvertierung</h4><p><code>unsqueeze(-1)</code> fügt eine Kanal-Dimension hinzu: <code>(N, 1024) -&gt; (N, 1024, 1)</code>. Das FNO erwartet diese Form, weil im Modell noch das Positional-Encoding (x-Koordinate) als zweiter Kanal angehängt wird.</p>` },
+  "dataloader": { title: "DataLoader bauen", body: `<h4>Batch-Iterator</h4><p>Der <code>DataLoader</code> liefert pro Schleifeniteration einen Mini-Batch der Größe <code>BATCH_SIZE</code>. Mit <code>shuffle=True</code> wird vor jeder Epoche neu gemischt.</p>` },
+  "spectral-class": { title: "SpectralConv1d - der Kern des FNO", body: `<h4>Spektrale Faltung</h4><p>Klassische Faltung im Ortsraum = Multiplikation im Frequenzraum. Statt im Ortsraum zu falten, lernen wir Gewichte direkt im Fourier-Raum:</p><ol><li>FFT der Eingabe</li><li>Multiplikation mit gelernten komplexen Gewichten (nur die ersten <code>modes</code> Moden)</li><li>Inverse FFT zurück</li></ol><p>Vorteil: globale Empfangs-Felder mit O(N log N) statt O(N*K).</p>` },
+  "scale": { title: "Initialisierungs-Skala", body: `<h4>Faktor 1/(in*out)</h4><p>Kleine Initialisierung - die Spektral-Multiplikationen würden sonst die Aktivierungen aufblähen. Empirisch von Li et al. (2021) so gewählt.</p>` },
+  "complex-weights": { title: "Komplexe Lernparameter", body: `<h4>cfloat (complex float)</h4><p>Die Gewichte leben im komplexen Zahlenraum, weil die FFT komplexe Werte produziert. Shape: <code>(in_ch, out_ch, modes)</code> - pro Mode eine vollständige Kanal-zu-Kanal-Mischmatrix.</p>` },
+  "forward": { title: "Forward-Pass des Spektral-Layers", body: `<h4>FFT -&gt; Multiplikation -&gt; iFFT</h4><p>Die drei Schritte der spektralen Faltung. Beachte: wir multiplizieren <em>nur</em> die ersten <code>modes</code> Frequenzen - höhere Frequenzen werden auf 0 gesetzt (Tiefpass-Wirkung).</p>` },
+  "rfft": { title: "rfft - reelle FFT", body: `<h4>Warum rfft statt fft?</h4><p>Unsere Eingabe ist reell. <code>rfft</code> gibt nur die positive Hälfte des Spektrums zurück (N/2+1 Werte statt N), weil die andere Hälfte konjugiert symmetrisch ist.</p>` },
+  "truncate-modes": { title: "Frequenz-Trunkierung", body: `<h4>Output-Spektrum auf 0 initialisieren</h4><p>Wir füllen nur die ersten <code>modes</code> Frequenzen mit gelernten Werten - der Rest bleibt 0. Das ist der Mechanismus, der FNO auflösungsinvariant macht.</p>` },
+  "einsum": { title: "einsum - Batch-Mode-Multiplikation", body: `<h4>Was bedeutet 'bix,iox-&gt;box'?</h4><ul><li><code>b</code> = Batch</li><li><code>i</code> = Eingabekanal (wird summiert)</li><li><code>o</code> = Ausgabekanal</li><li><code>x</code> = Mode-Index</li></ul><p>Für jeden Mode <code>x</code>: <code>output[b,o,x] = sum_i input[b,i,x] * weight[i,o,x]</code>.</p>` },
+  "irfft": { title: "irfft - Rücktransformation", body: `<h4>Zurück in den Ortsraum</h4><p>Die inverse reelle FFT mit explizit angegebenem <code>n</code>, damit das Output-Grid die gleiche Länge wie das Input-Grid hat.</p>` },
+  "fno-class": { title: "FNO1d - das Gesamtmodell", body: `<h4>Architektur</h4><ol><li><strong>Lifting</strong> (<code>fc_in</code>): liftet Eingabe von 2 Kanälen (u, x) auf <code>width</code> Kanäle</li><li><strong>N Fourier-Blocks</strong>: SpectralConv + 1x1-Conv parallel, dann GELU</li><li><strong>Projection</strong> (<code>fc_out</code>): projiziert zurück auf 1 Kanal</li></ol>` },
+  "lifting": { title: "Lifting-Layer", body: `<h4>Input-Embedding</h4><p>Erweitert den Eingabevektor (Funktionswert + Position) auf höhere Dimension. Vergleichbar mit dem Embedding-Layer in Transformern.</p>` },
+  "speclayers": { title: "Stapel von Spektral-Layern", body: `<h4>ModuleList</h4><p>4 unabhängige SpectralConv1d-Layer. Jeder hat seine eigenen Gewichte (~130 k Parameter). <code>ModuleList</code> ist wichtig statt einer normalen Python-Liste, damit PyTorch die Parameter findet.</p>` },
+  "wlayers": { title: "1x1-Faltungen (Residual)", body: `<h4>Skip-Pfad pro Layer</h4><p>Parallel zur Spektral-Faltung läuft eine 1x1-Konvolution. Sie liefert den Tiefpass-/Identitätsanteil und stabilisiert das Training.</p>` },
+  "projection": { title: "Projection-Layer", body: `<h4>Output-Decoder</h4><p>Zwei Linear-Layer mit GELU zwischen - projiziert die latenten <code>width</code> Kanäle zurück auf 1 Kanal (Skalarfeld).</p>` },
+  "fno-forward": { title: "Forward-Pass des FNO", body: `<h4>Datenfluss</h4><p>Input: <code>(B, N, 1)</code>. Output: <code>(B, N)</code>. Die <code>permute</code>-Aufrufe wechseln zwischen Channels-last (für Linear) und Channels-first (für Conv1d/SpectralConv).</p>` },
+  "grid-encode": { title: "Positional Encoding via x-Koordinate", body: `<h4>Wo bin ich im Raum?</h4><p>Wir hängen die x-Koordinate (0..1) als zusätzlichen Input-Kanal an. Ohne das wüsste das Netz nicht, wo die Eingabewerte räumlich liegen.</p>` },
+  "loop-layers": { title: "Layer-Schleife", body: `<h4>Block-Anwendung</h4><p>Pro Layer: Spektral-Pfad + Residual-Pfad addieren, dann GELU. <code>x = F.gelu(spec(x) + w(x))</code></p>` },
+  "instantiate": { title: "Modell instanziieren", body: `<h4>Auf GPU verschieben</h4><p><code>.to(device)</code> verschiebt alle Parameter auf die GPU (falls verfügbar). Muss vor dem Optimizer-Setup passieren!</p>` },
+  "param-count": { title: "Parameter zählen", body: `<h4>Modellgröße</h4><p>Summiert die Anzahl aller lernbaren Parameter. 0.55 M ist winzig - typische CNNs für ähnliche Aufgaben haben 1-10 M.</p>` },
+  "optimizer": { title: "Adam-Optimizer", body: `<h4>Adaptive Lernraten</h4><p>Adam ist robust für DL - adaptive pro-Parameter-Lernraten. Mit <code>weight_decay</code> wirkt es wie AdamW (L2-Regularisierung).</p>` },
+  "scheduler": { title: "Cosine Annealing", body: `<h4>LR-Verlauf</h4><p>Die Lernrate folgt einer Kosinus-Kurve von <code>LR</code> auf 0 über <code>T_max=500</code> Epochen. Sanftes Abkühlen am Ende verbessert die finale Genauigkeit.</p>` },
+  "rel-l2-loss": { title: "Relative L2-Norm", body: `<h4>Warum nicht MSE?</h4><p>Bei PDE-Lösungen variieren die Amplituden stark zwischen Stichproben. Relative L2 normalisiert pro Sample und ist die in PDEBench übliche Metrik.</p><div class="code-snippet">||pred - target||_2 / ||target||_2</div>` },
+  "best-init": { title: "Best-Test initialisieren", body: `<h4>Floating-Point Infinity</h4><p>Startwert unendlich, damit der erste echte Loss garantiert kleiner ist und das erste Modell gespeichert wird.</p>` },
+  "epoch-loop": { title: "Outer Loop: Epochen", body: `<h4>500 Durchläufe</h4><p>Eine Epoche = ein kompletter Durchgang durch den Trainingsset. Bei 900 Samples / Batch 20 = 45 Optimizer-Schritte pro Epoche.</p>` },
+  "train-mode": { title: "model.train()", body: `<h4>Trainings-Modus</h4><p>Aktiviert Dropout und BatchNorm-Statistik-Updates. Bei FNO eigentlich egal (kein Dropout, kein BN), aber gute Gewohnheit.</p>` },
+  "batch-loop": { title: "Inner Loop: Batches", body: `<h4>Mini-Batch-Iteration</h4><p>Pro Iteration: ein Batch laden, auf Device verschieben, Forward, Loss, Backward, Step.</p>` },
+  "zero-grad": { title: "Gradienten löschen", body: `<h4>Wichtig vor jedem Backward</h4><p>PyTorch akkumuliert Gradienten standardmäßig. Ohne <code>zero_grad()</code> würden die Gradienten aus allen vorherigen Batches addiert - Trainings-Bug Nummer 1 bei Anfängern.</p>` },
+  "backward": { title: "Loss berechnen", body: `<h4>Relative L2 pro Batch</h4><p>Differenz zwischen Vorhersage und Ground Truth, normalisiert pro Sample. Das ist die Größe, die wir minimieren.</p>` },
+  "step": { title: "Optimizer-Schritt", body: `<h4>Parameter aktualisieren</h4><p>Adam nutzt die akkumulierten Gradienten und seine Momentum-Schätzer, um jeden Parameter um einen kleinen Schritt zu verschieben.</p>` },
+  "lr-step": { title: "Scheduler-Schritt", body: `<h4>LR anpassen</h4><p>Cosine-Scheduler wird einmal pro Epoche aufgerufen. Senkt die LR cosinusförmig.</p>` },
+  "eval-mode": { title: "model.eval()", body: `<h4>Evaluations-Modus</h4><p>Schaltet Dropout aus und fixiert BatchNorm-Statistik. Pflicht vor jeder Test-Schleife.</p>` },
+  "no-grad": { title: "torch.no_grad()", body: `<h4>Autograd deaktivieren</h4><p>Im Test-Modus brauchen wir keine Gradienten. <code>no_grad</code> spart Speicher und ist ~2x schneller.</p>` },
+  "save-best": { title: "Bestes Modell speichern", body: `<h4>Checkpoint pro Verbesserung</h4><p>Sobald der Test-Loss neu ein Minimum erreicht, wird das aktuelle Modell auf Platte geschrieben.</p><div class="code-snippet">torch.save(model.state_dict(), 'models/fno_burgers_best.pt')</div>` },
+  "load-best": { title: "Best-Checkpoint laden", body: `<h4>state_dict</h4><p>Lädt die zur besten Epoche gespeicherten Gewichte zurück ins Modell. Wichtig, weil das Modell am Ende des Trainings nicht zwingend das beste ist.</p>` },
+  "metrics": { title: "Test-Metriken", body: `<h4>Drei Sichtweisen</h4><ul><li><strong>rel-L2:</strong> mittlerer relativer Fehler</li><li><strong>MSE:</strong> mittlerer quadratischer Fehler</li><li><strong>L_inf:</strong> schlimmster punktweiser Fehler</li></ul>` },
+  "upsample": { title: "Upsampling auf höhere Auflösung", body: `<h4>Lineare Interpolation</h4><p>Wir interpolieren die Eingaben von 1024 auf 2048 Punkte. Das ist nur Vorbereitung - das Modell hat 2048-Punkt-Inputs nie gesehen.</p>` },
+  "zero-shot": { title: "Zero-Shot Super-Resolution", body: `<h4>Killer-Feature des FNO</h4><p>Wir wenden das auf Grid=1024 trainierte Modell direkt auf Grid=2048 an - ohne Re-Training. Funktioniert, weil die Spektral-Layer im Frequenzraum arbeiten und die Anzahl gelernter Moden (16) gleich bleibt.</p>` }
+};
+
+/* ====================== DATEI-INHALTE ====================== */
+const FILES = {
+  "fno_training.ipynb": {
+    ext: "nb", badge: "ipynb",
+    desc: '<span class="tag">aktuelle Datei</span> Jupyter-Notebook mit dem kompletten FNO-Training. Du siehst es bereits im Editor.',
+    body: '<div class="fm-content"><span class="cm"># Aktuell geöffnet im Editor.\n# Schließe dieses Fenster, um zum Notebook zurückzukehren.</span></div>'
+  },
+  "config.yaml": {
+    ext: "yml", badge: "cfg",
+    desc: 'Zentrale Konfigurations-Datei. Alle Hyperparameter werden hier definiert, sodass das Notebook nur die Werte liest.',
+    body: `<div class="fm-content"><span class="kw">model</span>:
+  <span class="kw">modes</span>: <span class="nm">16</span>
+  <span class="kw">width</span>: <span class="nm">64</span>
+  <span class="kw">n_layers</span>: <span class="nm">4</span>
+
+<span class="kw">training</span>:
+  <span class="kw">epochs</span>: <span class="nm">500</span>
+  <span class="kw">batch_size</span>: <span class="nm">20</span>
+  <span class="kw">lr</span>: <span class="nm">1.0e-3</span>
+  <span class="kw">weight_decay</span>: <span class="nm">1.0e-4</span>
+  <span class="kw">scheduler</span>: <span class="st">cosine</span>
+
+<span class="kw">data</span>:
+  <span class="kw">path</span>: <span class="st">data/1D_Burgers_Sols_Nu0.01.hdf5</span>
+  <span class="kw">n_train</span>: <span class="nm">900</span>
+  <span class="kw">n_test</span>: <span class="nm">100</span>
+  <span class="kw">grid</span>: <span class="nm">1024</span>
+  <span class="kw">nu</span>: <span class="nm">0.01</span>
+
+<span class="kw">output</span>:
+  <span class="kw">checkpoint_dir</span>: <span class="st">models/</span>
+  <span class="kw">log_dir</span>: <span class="st">logs/</span>
+  <span class="kw">save_best_only</span>: <span class="kw">true</span></div>`
+  },
+  "requirements.txt": {
+    ext: "txt", badge: "txt",
+    desc: 'Python-Abhängigkeiten. Installation via <code>pip install -r requirements.txt</code>.',
+    body: `<div class="fm-content">torch&gt;=<span class="nm">2.0.0</span>
+numpy&gt;=<span class="nm">1.24</span>
+h5py&gt;=<span class="nm">3.8</span>
+matplotlib&gt;=<span class="nm">3.7</span>
+pyyaml&gt;=<span class="nm">6.0</span>
+tqdm&gt;=<span class="nm">4.65</span>
+scipy&gt;=<span class="nm">1.10</span></div>`
+  },
+  "README.md": {
+    ext: "md", badge: "md",
+    desc: 'Projekt-Beschreibung. Erklärt Setup, Daten-Download und Reproduktions-Anleitung.',
+    body: `<div class="fm-content"><span class="cl"># FNO Burgers Training</span>
+
+Fourier Neural Operator (Li et al. 2021) trainiert auf
+1D-Burgers-Lösungen aus PDEBench / DARUS-2987.
+
+<span class="cl">## Setup</span>
+
+<span class="st">    conda create -n fno-env python=3.10
+    conda activate fno-env
+    pip install -r requirements.txt</span>
+
+<span class="cl">## Daten</span>
+
+Lade die HDF5-Datei von:
+<span class="st">https://darus.uni-stuttgart.de/dataset.xhtml?persistentId=
+doi:10.18419/DARUS-2987</span>
+
+Lege die Datei unter <span class="st">data/</span> ab.
+
+<span class="cl">## Training</span>
+
+<span class="st">    jupyter notebook fno_training.ipynb</span>
+
+oder als Skript:
+
+<span class="st">    python train.py --config config.yaml</span>
+
+<span class="cl">## Ergebnis</span>
+
+Test rel-L2 ~ 0.42 % nach 500 Epochen (RTX 4090, ~6.4 min).
+Checkpoint unter <span class="st">models/fno_burgers_best.pt</span>.
+
+<span class="cl">## Quelle</span>
+
+Takamoto et al., "PDEBench: An Extensive Benchmark for
+Scientific Machine Learning", NeurIPS 2022.</div>`
+  },
+  "utils/data_loader.py": {
+    ext: "py", badge: "py",
+    desc: 'Wiederverwendbare Funktion zum Laden der PDEBench-Daten. Wird im Notebook direkt inline gemacht; hier als Bibliotheks-Variante.',
+    body: `<div class="fm-content"><span class="kw">import</span> h5py
+<span class="kw">import</span> torch
+<span class="kw">from</span> torch.utils.data <span class="kw">import</span> TensorDataset, DataLoader
+
+
+<span class="kw">def</span> <span class="fn">load_pdebench_burgers</span>(path, n_train=<span class="nm">900</span>, n_test=<span class="nm">100</span>, seed=<span class="nm">0</span>):
+    <span class="st">"""Lädt 1D-Burgers-Lösungen aus einer PDEBench HDF5-Datei.
+
+    Returns
+    -------
+    train_loader, test_loader : DataLoader
+    x_coords                  : np.ndarray, shape (grid,)
+    """</span>
+    <span class="kw">with</span> h5py.File(path, <span class="st">'r'</span>) <span class="kw">as</span> f:
+        sols     = f[<span class="st">'tensor'</span>][:]
+        x_coords = f[<span class="st">'x-coordinate'</span>][:]
+
+    u0, u1 = sols[:, <span class="nm">0</span>, :], sols[:, -<span class="nm">1</span>, :]
+
+    rng = torch.Generator().manual_seed(seed)
+    idx = torch.randperm(<span class="bi">len</span>(u0), generator=rng)[:n_train + n_test]
+    u0, u1 = u0[idx], u1[idx]
+
+    <span class="kw">def</span> <span class="fn">_loader</span>(a, b, shuffle):
+        ds = TensorDataset(
+            torch.tensor(a, dtype=torch.float32).unsqueeze(-<span class="nm">1</span>),
+            torch.tensor(b, dtype=torch.float32))
+        <span class="kw">return</span> DataLoader(ds, batch_size=<span class="nm">20</span>, shuffle=shuffle)
+
+    train = _loader(u0[:n_train], u1[:n_train], <span class="kw">True</span>)
+    test  = _loader(u0[n_train:], u1[n_train:], <span class="kw">False</span>)
+    <span class="kw">return</span> train, test, x_coords</div>`
+  },
+  "utils/fourier_layer.py": {
+    ext: "py", badge: "py",
+    desc: 'Eigenständige Definition der <code>SpectralConv1d</code>-Schicht - der Kern des FNO. Im Notebook ist sie inline definiert; hier als wiederverwendbares Modul.',
+    body: `<div class="fm-content"><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+
+<span class="kw">class</span> <span class="cl">SpectralConv1d</span>(nn.Module):
+    <span class="st">"""1D Spectral-Convolution-Schicht aus Li et al. 2021.
+
+    Lernt komplexe Gewichte direkt im Fourier-Raum.
+    Die ersten <span class="cm">modes</span> Frequenzen werden behalten,
+    der Rest auf 0 gesetzt (Tiefpass-Wirkung).
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>, in_ch, out_ch, modes):
+        <span class="bi">super</span>().__init__()
+        <span class="va">self</span>.in_ch, <span class="va">self</span>.out_ch = in_ch, out_ch
+        <span class="va">self</span>.modes = modes
+        scale = <span class="nm">1</span> / (in_ch * out_ch)
+        <span class="va">self</span>.weights = nn.Parameter(
+            scale * torch.rand(in_ch, out_ch, modes, dtype=torch.cfloat))
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, x):
+        B = x.shape[<span class="nm">0</span>]
+        x_ft = torch.fft.rfft(x)
+        out_ft = torch.zeros(
+            B, <span class="va">self</span>.out_ch, x.size(-<span class="nm">1</span>) // <span class="nm">2</span> + <span class="nm">1</span>,
+            dtype=torch.cfloat, device=x.device)
+        out_ft[:, :, :<span class="va">self</span>.modes] = torch.einsum(
+            <span class="st">'bix,iox-&gt;box'</span>,
+            x_ft[:, :, :<span class="va">self</span>.modes],
+            <span class="va">self</span>.weights)
+        <span class="kw">return</span> torch.fft.irfft(out_ft, n=x.size(-<span class="nm">1</span>))</div>`
+  },
+  "utils/losses.py": {
+    ext: "py", badge: "py",
+    desc: 'Loss-Funktionen für PDE-Problem. Relative L2 ist die in PDEBench gebräuchlichste Metrik.',
+    body: `<div class="fm-content"><span class="kw">import</span> torch
+
+
+<span class="kw">def</span> <span class="fn">rel_l2_loss</span>(pred, target, eps=<span class="nm">1e-8</span>):
+    <span class="st">"""Mittlere relative L2-Norm über die Batch-Dimension."""</span>
+    num   = torch.norm(pred - target, p=<span class="nm">2</span>, dim=-<span class="nm">1</span>)
+    denom = torch.norm(target,        p=<span class="nm">2</span>, dim=-<span class="nm">1</span>) + eps
+    <span class="kw">return</span> (num / denom).mean()
+
+
+<span class="kw">def</span> <span class="fn">h1_loss</span>(pred, target):
+    <span class="st">"""H1-Norm: kombiniert L2 mit L2 der Ableitung.
+    Strafft auch Hochfrequenz-Fehler.
+    """</span>
+    l2  = rel_l2_loss(pred, target)
+    dx  = pred[..., <span class="nm">1</span>:] - pred[..., :-<span class="nm">1</span>]
+    dy  = target[..., <span class="nm">1</span>:] - target[..., :-<span class="nm">1</span>]
+    h1  = rel_l2_loss(dx, dy)
+    <span class="kw">return</span> l2 + <span class="nm">0.1</span> * h1</div>`
+  },
+  "utils/plotting.py": {
+    ext: "py", badge: "py",
+    desc: 'Helfer für Loss-Kurven und Vorhersage-Plots.',
+    body: `<div class="fm-content"><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+
+<span class="kw">def</span> <span class="fn">plot_losses</span>(train, test, save_path=<span class="kw">None</span>):
+    fig, ax = plt.subplots(figsize=(<span class="nm">7</span>, <span class="nm">4</span>))
+    ax.semilogy(train, label=<span class="st">'train'</span>, color=<span class="st">'#1f77b4'</span>)
+    ax.semilogy(test,  label=<span class="st">'test'</span>,  color=<span class="st">'#d62728'</span>)
+    ax.set_xlabel(<span class="st">'Epoch'</span>)
+    ax.set_ylabel(<span class="st">'relative L2'</span>)
+    ax.legend(); ax.grid(<span class="kw">True</span>, alpha=<span class="nm">0.3</span>)
+    plt.tight_layout()
+    <span class="kw">if</span> save_path: plt.savefig(save_path, dpi=<span class="nm">150</span>)
+    plt.show()
+
+
+<span class="kw">def</span> <span class="fn">plot_predictions</span>(x, y_true, y_pred, indices):
+    n = <span class="bi">len</span>(indices)
+    fig, axes = plt.subplots(n, <span class="nm">2</span>, figsize=(<span class="nm">11</span>, <span class="nm">2.3</span>*n))
+    <span class="kw">for</span> row, i <span class="kw">in</span> <span class="bi">enumerate</span>(indices):
+        axes[row, <span class="nm">0</span>].plot(x[i], label=<span class="st">'input'</span>,  ls=<span class="st">'--'</span>, color=<span class="st">'gray'</span>)
+        axes[row, <span class="nm">0</span>].plot(y_true[i], label=<span class="st">'true'</span>, color=<span class="st">'#1f77b4'</span>)
+        axes[row, <span class="nm">0</span>].plot(y_pred[i], label=<span class="st">'pred'</span>, color=<span class="st">'#d62728'</span>, ls=<span class="st">':'</span>)
+        axes[row, <span class="nm">0</span>].legend()
+        axes[row, <span class="nm">1</span>].plot(y_pred[i] - y_true[i], color=<span class="st">'k'</span>)
+        axes[row, <span class="nm">1</span>].set_title(<span class="st">'error'</span>)
+    plt.tight_layout(); plt.show()</div>`
+  },
+  "data/1D_Burgers_Sols_Nu0.01.hdf5": {
+    ext: "hdf5", badge: "hdf",
+    desc: '<span class="tag">Binärdatei</span> 1D-Burgers-Lösungen aus PDEBench mit Viskosität nu=0.01. Quelle: <a href="https://darus.uni-stuttgart.de/dataset.xhtml?persistentId=doi:10.18419/DARUS-2987" target="_blank">DARUS-2987</a>.',
+    body: `<div class="fm-binary">HDF5 file (binary)  -  412 MB
+
+Datasets:
+  /tensor          shape=(10000, 201, 1024)  dtype=float32
+  /x-coordinate    shape=(1024,)             dtype=float32
+  /t-coordinate    shape=(201,)              dtype=float32
+
+Inhalt:
+  10 000 Lösungen der 1D-Burgers-Gleichung
+    du/dt + u * du/dx = nu * d2u/dx2,   nu = 0.01
+  auf [0, 1] x [0, 2] mit 1024 x-Punkten und 201 Zeitschritten.
+  Anfangsbedingungen sind zufällige Sinus-Reihen mit Phasen.
+
+Quelle:
+  Takamoto et al., PDEBench, NeurIPS 2022.
+  doi:10.18419/DARUS-2987
+
+Lesen in Python:
+  import h5py
+  with h5py.File(path, 'r') as f:
+      data = f['tensor'][:]</div>`
+  },
+  "data/1D_Burgers_Sols_Nu0.001.hdf5": {
+    ext: "hdf5", badge: "hdf",
+    desc: '<span class="tag">Binärdatei</span> Wie Nu0.01, aber mit niedrigerer Viskosität nu=0.001. Lösungen entwickeln schärfere Stöße.',
+    body: `<div class="fm-binary">HDF5 file (binary)  -  412 MB
+
+Datasets:
+  /tensor          shape=(10000, 201, 1024)  dtype=float32
+  /x-coordinate    shape=(1024,)             dtype=float32
+
+Hinweis: nu = 0.001 ist schwieriger zu lernen als 0.01.
+Empfohlene Anpassungen: MODES = 24, EPOCHS = 1000.</div>`
+  },
+  "data/1D_Burgers_Sols_Nu0.1.hdf5": {
+    ext: "hdf5", badge: "hdf",
+    desc: '<span class="tag">Binärdatei</span> Hohe Viskosität nu=0.1 - die Lösungen sind sehr glatt, leicht zu lernen.',
+    body: `<div class="fm-binary">HDF5 file (binary)  -  412 MB
+
+Datasets:
+  /tensor          shape=(10000, 201, 1024)  dtype=float32
+  /x-coordinate    shape=(1024,)             dtype=float32
+
+Hinweis: nu = 0.1 ist trivial zu lernen.
+Test rel-L2 oft &lt; 0.001 nach wenigen Epochen.</div>`
+  },
+  "models/fno_burgers_best.pt": {
+    ext: "pt", badge: "pt",
+    desc: '<span class="tag">Binärdatei</span> PyTorch-Checkpoint des besten Modells (niedrigster Test-Loss während des Trainings).',
+    body: `<div class="fm-binary">PyTorch state_dict (binary)  -  1.2 MB
+
+Inhalt:
+  fc_in.weight                 shape=(64, 2)
+  fc_in.bias                   shape=(64,)
+  specs.0.weights              shape=(64, 64, 16)  complex64
+  specs.1.weights              shape=(64, 64, 16)  complex64
+  specs.2.weights              shape=(64, 64, 16)  complex64
+  specs.3.weights              shape=(64, 64, 16)  complex64
+  ws.0.weight                  shape=(64, 64, 1)
+  ws.0.bias                    shape=(64,)
+  ws.1.weight                  shape=(64, 64, 1)
+  ws.1.bias                    shape=(64,)
+  ws.2.weight                  shape=(64, 64, 1)
+  ws.2.bias                    shape=(64,)
+  ws.3.weight                  shape=(64, 64, 1)
+  ws.3.bias                    shape=(64,)
+  fc_out.0.weight              shape=(128, 64)
+  fc_out.0.bias                shape=(128,)
+  fc_out.2.weight              shape=(1, 128)
+  fc_out.2.bias                shape=(1,)
+
+Gesamt:           549 569 Parameter
+Trainings-Metrik: test rel-L2 = 0.00421 (Epoche 423)
+
+Laden:
+  model = FNO1d()
+  model.load_state_dict(torch.load(path))</div>`
+  },
+  "models/fno_burgers_last.pt": {
+    ext: "pt", badge: "pt",
+    desc: '<span class="tag">Binärdatei</span> Modell-Zustand am Ende des Trainings (Epoche 499). Aehnlich zu best, aber nicht garantiert das Optimum.',
+    body: `<div class="fm-binary">PyTorch state_dict (binary)  -  1.2 MB
+
+Identische Struktur zu fno_burgers_best.pt,
+aber Zustand nach Epoche 499 statt bei Best-Epoche.
+
+Trainings-Metrik: test rel-L2 = 0.00423 (Epoche 499)</div>`
+  },
+  "logs/train_2026-05-28.log": {
+    ext: "log", badge: "log",
+    desc: 'Vollständiges Log des Trainings-Laufs vom 28. Mai 2026.',
+    body: `<div class="fm-content"><span class="cm">2026-05-28 14:23:01</span> INFO   Starting FNO training
+<span class="cm">2026-05-28 14:23:01</span> INFO   Device: cuda (NVIDIA GeForce RTX 4090)
+<span class="cm">2026-05-28 14:23:01</span> INFO   Loaded config from config.yaml
+<span class="cm">2026-05-28 14:23:02</span> INFO   Loaded 10000 samples from PDEBench
+<span class="cm">2026-05-28 14:23:02</span> INFO   Train/Test split: 900 / 100
+<span class="cm">2026-05-28 14:23:03</span> INFO   Model: FNO1d with 549,569 parameters
+<span class="cm">2026-05-28 14:23:03</span> INFO   Optimizer: Adam(lr=1.0e-3, weight_decay=1.0e-4)
+<span class="cm">2026-05-28 14:23:03</span> INFO   Scheduler: CosineAnnealingLR(T_max=500)
+<span class="cm">2026-05-28 14:23:04</span> INFO   epoch   0 | train 0.51823 | test 0.48907
+<span class="cm">2026-05-28 14:23:04</span> INFO   New best test loss, saving checkpoint
+<span class="cm">2026-05-28 14:24:42</span> INFO   epoch  50 | train 0.04127 | test 0.04891
+<span class="cm">2026-05-28 14:26:19</span> INFO   epoch 100 | train 0.01893 | test 0.02214
+<span class="cm">2026-05-28 14:27:57</span> INFO   epoch 150 | train 0.01024 | test 0.01387
+<span class="cm">2026-05-28 14:29:34</span> INFO   epoch 200 | train 0.00612 | test 0.00891
+<span class="cm">2026-05-28 14:31:11</span> INFO   epoch 250 | train 0.00398 | test 0.00673
+<span class="cm">2026-05-28 14:32:48</span> INFO   epoch 300 | train 0.00271 | test 0.00521
+<span class="cm">2026-05-28 14:34:25</span> INFO   epoch 350 | train 0.00198 | test 0.00447
+<span class="cm">2026-05-28 14:36:02</span> INFO   epoch 400 | train 0.00171 | test 0.00428
+<span class="cm">2026-05-28 14:37:40</span> INFO   epoch 423 | train 0.00170 | test 0.00421 [BEST]
+<span class="cm">2026-05-28 14:37:40</span> INFO   New best test loss, saving checkpoint
+<span class="cm">2026-05-28 14:39:17</span> INFO   epoch 450 | train 0.00168 | test 0.00425
+<span class="cm">2026-05-28 14:42:32</span> INFO   epoch 499 | train 0.00166 | test 0.00423
+<span class="cm">2026-05-28 14:42:32</span> INFO   Training finished in 384.7s
+<span class="cm">2026-05-28 14:42:32</span> INFO   Best test rel-L2: 0.00421 at epoch 423
+<span class="cm">2026-05-28 14:42:32</span> INFO   Final checkpoint: models/fno_burgers_last.pt
+<span class="cm">2026-05-28 14:42:32</span> INFO   Best checkpoint:  models/fno_burgers_best.pt</div>`
+  },
+  "logs/metrics.csv": {
+    ext: "csv", badge: "csv",
+    desc: 'CSV mit Loss-Werten pro Epoche für spätere Auswertung in Pandas / Excel.',
+    body: `<div class="fm-content">epoch,train_loss,test_loss,lr,time_s
+0,0.51823,0.48907,1.000e-03,1.94
+1,0.18421,0.21089,9.999e-04,3.88
+2,0.12347,0.14223,9.998e-04,5.82
+...
+50,0.04127,0.04891,9.510e-04,98.2
+100,0.01893,0.02214,8.090e-04,196.1
+150,0.01024,0.01387,6.050e-04,294.7
+200,0.00612,0.00891,3.950e-04,389.3
+250,0.00398,0.00673,1.910e-04,486.5
+300,0.00271,0.00521,4.890e-05,584.2
+350,0.00198,0.00447,1.230e-06,681.4
+400,0.00171,0.00428,0.000e+00,778.6
+423,0.00170,0.00421,0.000e+00,824.1
+450,0.00168,0.00425,0.000e+00,876.3
+499,0.00166,0.00423,0.000e+00,972.7</div>`
+  }
+};
+
+/* ====================== UI-LOGIK ====================== */
+const explainerEl = document.getElementById('explainer');
+const exTitle = document.getElementById('ex-title');
+const exBody  = document.getElementById('ex-body');
+let activeLine = null;
+
+document.querySelectorAll('.ln').forEach(line => {
+  line.addEventListener('click', () => {
+    if (activeLine) activeLine.classList.remove('active');
+    line.classList.add('active');
+    activeLine = line;
+
+    const key = line.dataset.explain;
+    if (key && EXPLAIN[key]) {
+      const e = EXPLAIN[key];
+      exTitle.textContent = e.title;
+      exBody.innerHTML = e.body;
+    } else {
+      exTitle.textContent = "Keine Erklärung";
+      exBody.innerHTML = '<div class="ex-empty">Für diese Zeile ist keine Erklärung hinterlegt.<br><br>Bei Fragen frag den Tutor.</div>';
+    }
+    explainerEl.classList.add('show');
+  });
+});
+
+function closeExplainer() {
+  explainerEl.classList.remove('show');
+  if (activeLine) { activeLine.classList.remove('active'); activeLine = null; }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeExplainer(); closeFile(); }
+});
+
+/* ---- Run buttons ---- */
+function runCell(cellEl) {
+  if (!cellEl || cellEl.classList.contains('running')) return;
+  const exec   = cellEl.dataset.exec;
+  const isLong = cellEl.dataset.long === '1';
+  const btn    = cellEl.querySelector('.runbtn');
+  const counter= cellEl.querySelector('.exec');
+  const out    = cellEl.querySelector('.out-area');
+  const stream = cellEl.querySelector('.out[data-stream="1"]');
+
+  cellEl.classList.add('running');
+  btn.classList.remove('done'); btn.classList.add('running');
+  counter.textContent = '[*]';
+  counter.classList.remove('empty'); counter.classList.add('running');
+
+  const delay = isLong ? 1400 : 300 + Math.random()*200;
+
+  setTimeout(() => {
+    counter.textContent = '[' + exec + ']';
+    counter.classList.remove('running');
+    btn.classList.remove('running'); btn.classList.add('done');
+    cellEl.classList.remove('running');
+    out.classList.add('show');
+
+    if (stream) {
+      const full = stream.textContent;
+      stream.textContent = '';
+      const lines = full.split('\n');
+      let i = 0;
+      const step = () => {
+        if (i >= lines.length) return;
+        stream.textContent += (i === 0 ? '' : '\n') + lines[i];
+        i++;
+        setTimeout(step, 70);
+      };
+      step();
+    }
+  }, delay);
+}
+
+document.querySelectorAll('.cell.code').forEach(cell => {
+  const btn = cell.querySelector('.runbtn');
+  if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); runCell(cell); });
+});
+
+document.getElementById('run-all').addEventListener('click', () => {
+  const cells = [...document.querySelectorAll('.cell.code')];
+  let delay = 0;
+  cells.forEach(c => {
+    setTimeout(() => runCell(c), delay);
+    delay += (c.dataset.long === '1') ? 1700 : 500;
+  });
+});
+
+document.getElementById('clear-out').addEventListener('click', () => {
+  document.querySelectorAll('.cell.code').forEach(c => {
+    c.querySelector('.out-area').classList.remove('show');
+    const counter = c.querySelector('.exec');
+    counter.textContent = '[ ]';
+    counter.classList.add('empty'); counter.classList.remove('running');
+    c.querySelector('.runbtn').classList.remove('done','running');
+  });
+});
+
+/* ---- File preview ---- */
+const backdrop = document.getElementById('backdrop');
+const fileModal = document.getElementById('filemodal');
+const fmName = document.getElementById('fm-name');
+const fmBody = document.getElementById('fm-body');
+
+document.querySelectorAll('.tree .file').forEach(item => {
+  item.addEventListener('click', () => {
+    const path = item.dataset.file;
+    const file = FILES[path];
+    if (!file) {
+      fmName.textContent = path;
+      fmBody.innerHTML = '<div class="fm-desc">Keine Vorschau hinterlegt.</div>';
+    } else {
+      fmName.textContent = path;
+      fmBody.innerHTML = '<div class="fm-desc">' + file.desc + '</div>' + file.body;
+    }
+    backdrop.classList.add('show');
+    fileModal.classList.add('show');
+  });
+});
+
+function closeFile(){
+  backdrop.classList.remove('show');
+  fileModal.classList.remove('show');
+}
+
+/* sidebar folder toggle */
+document.querySelectorAll('.tree .folder').forEach(f => {
+  f.addEventListener('click', () => f.classList.toggle('closed'));
+});
+
+/* sidebar collapse via activity-bar Explorer icon */
+const appEl = document.querySelector('.app');
+document.querySelectorAll('.activity .ic').forEach(ic => {
+  ic.addEventListener('click', () => {
+    if (ic.title === 'Explorer') {
+      appEl.classList.toggle('sidebar-collapsed');
+    }
+  });
+});
+
+/* ===== Inline parameter chips (MODES + LOSS) =====
+   MODES aendert nur die angezeigte Konstante in Cell 2.
+   LOSS tauscht den Funktions-Code in Cell 7 + die Aufrufe in Cell 8 aus.
+   Outputs bleiben Platzhalter-Notizen ("Aus dem echten Training: ..."). */
+const paramState = { modes:16, loss:'rel-L2' };
+
+const LOSS_FN_NAMES = {
+  'rel-L2': 'rel_l2_loss',
+  'MSE':    'mse_loss',
+  'H1':     'h1_loss'
+};
+
+function applyParams() {
+  // 1) MODES-Konstante in Cell 2
+  document.getElementById('hp-modes').textContent = paramState.modes;
+
+  // 2) Loss-Funktions-Code in Cell 7: nur den passenden Block sichtbar lassen
+  document.querySelectorAll('.loss-fn-block').forEach(block => {
+    block.hidden = (block.dataset.lossBlock !== paramState.loss);
+  });
+
+  // 3) Aufruf-Stellen in Cell 8: alle .loss-call mit dem aktuellen Namen befuellen
+  const name = LOSS_FN_NAMES[paramState.loss] || 'rel_l2_loss';
+  document.querySelectorAll('.loss-call').forEach(el => el.textContent = name);
+
+  // 4) Vorschau-Plots neu rendern
+  const lossPlot = document.getElementById('plot-loss');
+  const predPlot = document.getElementById('plot-pred');
+  if (lossPlot) lossPlot.innerHTML = renderLossPlot(paramState.modes, paramState.loss);
+  if (predPlot) predPlot.innerHTML = renderPredPlot(paramState.modes, paramState.loss);
+}
+
+/* ===== SVG Plot-Renderer (stilisierte Vorschau) ===== */
+
+const TEST_CASES = [
+  { id: 3,  comps: [{a:0.65, f:1, p:0.3}, {a:0.32, f:3, p:1.5}, {a:0.15, f:5, p:0.8}, {a:0.08, f:8, p:2.2}] },
+  { id: 17, comps: [{a:0.50, f:2, p:0.5}, {a:0.42, f:1, p:2.1}, {a:0.20, f:4, p:0.3}, {a:0.10, f:7, p:1.9}] },
+  { id: 42, comps: [{a:0.70, f:1, p:1.8}, {a:0.28, f:4, p:0.4}, {a:0.18, f:6, p:2.7}, {a:0.06, f:9, p:0.9}] }
+];
+
+function inputAt(c, x) { return c.a * Math.sin(2*Math.PI*c.f*x + c.p); }
+function trueAt(c, x)  {
+  // Burgers-typische Diffusion: hohe Frequenzen werden gedaempft
+  const damp = Math.exp(-0.06 * c.f * c.f);
+  return c.a * damp * Math.sin(2*Math.PI*c.f*x + c.p);
+}
+
+function renderPredPlot(modes, loss) {
+  const N = 100, PANEL_W = 230, PANEL_H = 150, GAP = 14;
+  const PAD_L = 30, PAD_R = 8, PAD_T = 24, PAD_B = 22;
+  const PLOT_W = PANEL_W - PAD_L - PAD_R;
+  const PLOT_H = PANEL_H - PAD_T - PAD_B;
+  const errScale  = 0.05 * Math.pow(16 / modes, 0.7);
+  const lossFactor = loss === 'MSE' ? 1.15 : loss === 'H1' ? 0.78 : 1.0;
+
+  const panels = TEST_CASES.map((tc, idx) => {
+    const xs = Array.from({length: N}, (_, i) => i / (N-1));
+    const inp  = xs.map(x => tc.comps.reduce((s,c) => s + inputAt(c,x), 0));
+    const tru  = xs.map(x => tc.comps.reduce((s,c) => s + trueAt(c,x), 0));
+    const pred = tru.map((t,i) => {
+      const x = xs[i];
+      const noise = Math.sin(13*x + idx*1.7 + modes/8) * 0.6
+                  + Math.sin(7*x + idx*2.3) * 0.4;
+      return t + errScale * lossFactor * noise;
+    });
+
+    const all = inp.concat(tru, pred);
+    const ymin = Math.min(...all) - 0.1;
+    const ymax = Math.max(...all) + 0.1;
+    const ox = idx * (PANEL_W + GAP);
+
+    const path = (ys) => xs.map((x,i) => {
+      const px = ox + PAD_L + x * PLOT_W;
+      const py = PAD_T + PLOT_H - (ys[i] - ymin) / (ymax - ymin) * PLOT_H;
+      return (i ? 'L' : 'M') + px.toFixed(1) + ',' + py.toFixed(1);
+    }).join(' ');
+
+    const zeroY = PAD_T + PLOT_H * (ymax / (ymax - ymin));
+
+    return `
+      <text x="${ox + PAD_L + PLOT_W/2}" y="14" text-anchor="middle"
+            font-size="11" fill="currentColor" font-weight="500">Testfall #${tc.id}</text>
+      <rect x="${ox + PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}"
+            fill="none" stroke="#666" stroke-width="0.4" opacity="0.5"/>
+      <line x1="${ox + PAD_L}" y1="${zeroY}" x2="${ox + PAD_L + PLOT_W}" y2="${zeroY}"
+            stroke="#666" stroke-width="0.3" stroke-dasharray="2,3" opacity="0.5"/>
+      <path d="${path(inp)}"  stroke="#888"    stroke-width="1"   fill="none" stroke-dasharray="3,2" opacity="0.7"/>
+      <path d="${path(tru)}"  stroke="#1f77b4" stroke-width="1.7" fill="none"/>
+      <path d="${path(pred)}" stroke="#d62728" stroke-width="1.3" fill="none" stroke-dasharray="3,2"/>
+      <text x="${ox + PAD_L}"          y="${PANEL_H - 6}" font-size="9" fill="currentColor" opacity="0.6">0</text>
+      <text x="${ox + PAD_L + PLOT_W}" y="${PANEL_H - 6}" font-size="9" fill="currentColor" opacity="0.6" text-anchor="end">x=1</text>
+    `;
+  }).join('');
+
+  const total = TEST_CASES.length * PANEL_W + (TEST_CASES.length - 1) * GAP;
+  const legendY = PANEL_H + 16;
+  const legend = `
+    <g transform="translate(${total/2 - 175}, ${legendY})">
+      <line x1="0"   y1="5" x2="20"  y2="5" stroke="#888"    stroke-width="1"   stroke-dasharray="3,2"/>
+      <text x="25"  y="9" font-size="10.5" fill="currentColor">Input u(x,0)</text>
+      <line x1="115" y1="5" x2="135" y2="5" stroke="#1f77b4" stroke-width="1.7"/>
+      <text x="140" y="9" font-size="10.5" fill="currentColor">Wahrheit u(x,T)</text>
+      <line x1="245" y1="5" x2="265" y2="5" stroke="#d62728" stroke-width="1.3" stroke-dasharray="3,2"/>
+      <text x="270" y="9" font-size="10.5" fill="currentColor">FNO-Vorhersage</text>
+    </g>
+  `;
+
+  return `<svg viewBox="0 0 ${total} ${PANEL_H + 28}" xmlns="http://www.w3.org/2000/svg">
+    ${panels}${legend}
+  </svg>`;
+}
+
+function renderLossPlot(modes, loss) {
+  const W = 640, H = 230;
+  const PAD_L = 60, PAD_R = 20, PAD_T = 26, PAD_B = 36;
+  const PLOT_W = W - PAD_L - PAD_R;
+  const PLOT_H = H - PAD_T - PAD_B;
+
+  const lossScale = loss === 'MSE' ? 0.55 : loss === 'H1' ? 1.18 : 1.0;
+  const finalL2   = 0.00421 * Math.pow(16 / modes, 0.5) * lossScale;
+  const initLoss  = (loss === 'MSE' ? 0.18 : 0.5) * lossScale;
+  const decayTau  = 80 * Math.pow(modes / 16, 0.3);
+
+  const pts = [];
+  for (let e = 0; e <= 500; e += 5) {
+    const decay = Math.exp(-e / decayTau);
+    const train = initLoss * decay + finalL2 * 0.7;
+    const test  = train * 1.35 + finalL2 * 0.4;
+    pts.push({ e, train, test });
+  }
+
+  const ymin = finalL2 * 0.3;
+  const ymax = Math.max(initLoss * 2, 1.0);
+  const lMin = Math.log10(ymin);
+  const lMax = Math.log10(ymax);
+
+  const toX = e => PAD_L + (e / 500) * PLOT_W;
+  const toY = y => {
+    const ly = Math.log10(Math.max(y, ymin));
+    return PAD_T + PLOT_H - (ly - lMin) / (lMax - lMin) * PLOT_H;
+  };
+
+  const pathFor = (key) => pts.map((p, i) =>
+    (i ? 'L' : 'M') + toX(p.e).toFixed(1) + ',' + toY(p[key]).toFixed(1)
+  ).join(' ');
+
+  const yTicks = [];
+  for (let l = Math.ceil(lMin); l <= Math.floor(lMax); l++) {
+    const y = toY(Math.pow(10, l));
+    yTicks.push(
+      `<line x1="${PAD_L}" y1="${y}" x2="${PAD_L + PLOT_W}" y2="${y}"
+             stroke="#666" stroke-width="0.3" stroke-dasharray="2,3" opacity="0.4"/>` +
+      `<text x="${PAD_L - 6}" y="${y + 3}" text-anchor="end"
+             font-size="10" fill="currentColor" opacity="0.8">10^${l}</text>`
+    );
+  }
+
+  const xTicks = [0, 100, 200, 300, 400, 500].map(e =>
+    `<text x="${toX(e)}" y="${H - 18}" text-anchor="middle"
+           font-size="10" fill="currentColor" opacity="0.8">${e}</text>`
+  ).join('');
+
+  const lossLabel = loss === 'MSE' ? 'MSE' : loss === 'H1' ? 'H1' : 'rel-L2';
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <text x="${W/2}" y="15" text-anchor="middle" font-size="12" font-weight="500" fill="currentColor">
+      FNO Training (MODES=${modes}, Loss=${loss})
+    </text>
+    <rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}"
+          fill="none" stroke="#666" stroke-width="0.5" opacity="0.6"/>
+    ${yTicks.join('')}
+    ${xTicks}
+    <text x="${PAD_L + PLOT_W/2}" y="${H - 4}" text-anchor="middle"
+          font-size="10.5" fill="currentColor">Epoch</text>
+    <text x="14" y="${PAD_T + PLOT_H/2}" text-anchor="middle" font-size="10.5"
+          fill="currentColor" transform="rotate(-90, 14, ${PAD_T + PLOT_H/2})">${lossLabel} (semilog)</text>
+    <path d="${pathFor('train')}" stroke="#1f77b4" stroke-width="1.7" fill="none"/>
+    <path d="${pathFor('test')}"  stroke="#d62728" stroke-width="1.7" fill="none"/>
+    <g transform="translate(${W - 140}, ${PAD_T + 10})">
+      <rect x="-6" y="-4" width="120" height="38" fill="#0008" rx="3"/>
+      <line x1="0"  y1="5"  x2="22" y2="5"  stroke="#1f77b4" stroke-width="1.7"/>
+      <text x="28" y="8" font-size="10.5" fill="#fff">train</text>
+      <line x1="0"  y1="22" x2="22" y2="22" stroke="#d62728" stroke-width="1.7"/>
+      <text x="28" y="25" font-size="10.5" fill="#fff">test</text>
+    </g>
+  </svg>`;
+}
+
+/* Initiales Rendern der Plots */
+applyParams();
+
+document.querySelectorAll('.chip-row').forEach(row => {
+  const param = row.dataset.param;
+  row.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const val = chip.dataset.val;
+      paramState[param] = (param === 'loss') ? val : Number(val);
+      applyParams();
+    });
+  });
+});
+
+/* ===== Theme toggle (Light / Dark) ===== */
+const themeBtn = document.getElementById('btn-theme');
+function setTheme(t) {
+  document.body.dataset.theme = t;
+  themeBtn.textContent = t === 'light' ? 'Dark Mode' : 'Light Mode';
+  try { localStorage.setItem('fno-theme', t); } catch(e) {}
+}
+themeBtn.addEventListener('click', () => {
+  setTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+});
+let initialTheme = 'dark';
+try { initialTheme = localStorage.getItem('fno-theme') || 'dark'; } catch(e) {}
+setTheme(initialTheme);
+</script>
+</body>
+</html>
