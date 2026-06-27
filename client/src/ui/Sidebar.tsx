@@ -12,8 +12,8 @@ const CHAPTERS: ChapterDef[] = [
   { id: 3, label: "3: Operator" },
   { id: 4, label: "4: FNO" },
   { id: 5, label: "5: PDEBench" },
-  { id: 6, label: "6: Live-Vergleich" },
-  { id: 7, label: "7: Fehleranalyse" },
+  { id: 6, label: "6: Training" },
+  { id: 7, label: "7: Ergebnis" },
   { id: 8, label: "8: Code & Notebook" },
 ];
 

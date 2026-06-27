@@ -1,18 +1,9 @@
-import { useState } from "react";
 import { useAppStore } from "../state/store";
-import {
-  LivePredictionFNO,
-  type QueryResult,
-} from "../visualizations/LivePredictionFNO";
-import { ConfigSpacePlot } from "../visualizations/ConfigSpacePlot";
+import { LivePredictionFNO } from "../visualizations/LivePredictionFNO";
 import { ErrorHeatmap } from "../visualizations/ErrorHeatmap";
-import { ModeLensError } from "../visualizations/ModeLensError";
 import { ChatTrigger } from "../ui/ChatTrigger";
 import { ChapterIntro } from "../ui/ChapterIntro";
-import {
-  DecisionPanel,
-  type DecisionOption,
-} from "../ui/DecisionPanel";
+import { OpenQuestion } from "../ui/OpenQuestion";
 
 const LIMITS_TUTOR_PROMPT =
   "Bereite mich auf den Abschluss von Kapitel 7 vor: ich soll dem Kunden " +
@@ -25,71 +16,18 @@ const LIMITS_TUTOR_PROMPT =
   "Designentscheidung? Halte es knapp genug, dass ich drei Sätze davon im " +
   "Bericht zitieren kann.";
 
-const LIMITS_DECISION_OPTIONS: DecisionOption[] = [
-  {
-    id: "training-range",
-    text: "Trainingsbereich explizit angeben (Viskositäts-Range, Verteilung der Anfangsbedingungen) — außerhalb gilt das Modell nicht.",
-    weight: "strong",
-  },
-  {
-    id: "mode-cutoff",
-    text: "Mode-Cutoff als Designentscheidung benennen — Strukturen feiner als die behaltenen Moden werden systematisch verworfen.",
-    weight: "strong",
-  },
-  {
-    id: "dimension",
-    text: "Dimensions-Übertragung markieren — ein 1D-Modell macht keine Aussagen über 2D- oder 3D-Strömungen.",
-    weight: "strong",
-  },
-  {
-    id: "ood",
-    text: "Out-of-Distribution-Verhalten beschreiben — bei untypischen Eingaben antwortet das Modell plausibel, aber unzuverlässig.",
-    weight: "strong",
-  },
-  {
-    id: "test-size",
-    text: "Test-Set ist relativ klein — die gemessene Genauigkeit hat Streuung.",
-    weight: "weak",
-  },
-  {
-    id: "more-epochs",
-    text: "Mehr Trainings-Epochen könnten den letzten Prozentpunkt noch herausholen.",
-    weight: "weak",
-  },
-  {
-    id: "universal",
-    text: "Mit dem gemessenen Test-Fehler ist das Modell für jeden Strömungsfall geeignet.",
-    weight: "wrong",
-    rebuttal:
-      "Der Testfehler gilt nur im Trainingsbereich. Außerhalb ist die Genauigkeit undefiniert — keine Verallgemeinerungs-Garantie ohne explizite Validierung.",
-  },
-  {
-    id: "open-budget",
-    text: "Das Fehler-Budget bleibt offen, damit der Kunde flexibel reagieren kann.",
-    weight: "wrong",
-    rebuttal:
-      "Ohne explizites Budget kein Engineering-Vertrag. Ein nicht festgelegtes Budget ist das Gegenteil von professioneller Übergabe — der Kunde kann später jede Abweichung als Mangel reklamieren.",
-  },
-];
+const ABSCHLUSS_FRAGE =
+  "Du formulierst einen kurzen Abschnitt für den Übergabe-Bericht an " +
+  "AeroDyn: welche Grenzen unseres trainierten FNO-Modells müssen explizit " +
+  "dokumentiert werden, damit der Kunde weiß, wo das Modell verlässlich " +
+  "gilt und wo nicht? Schreib zwei bis drei eigene Sätze, die so im " +
+  "Bericht stehen könnten.";
 
 export function Kapitel7() {
   const completeChapter = useAppStore((s) => s.completeChapter);
   const earnCC = useAppStore((s) => s.earnCC);
   const setView = useAppStore((s) => s.setView);
   const done = useAppStore((s) => s.completedChapters.includes(7));
-
-  const [history, setHistory] = useState<QueryResult[]>([]);
-  const [currentVisc, setCurrentVisc] = useState(0.2);
-  const [currentT, setCurrentT] = useState(0.5);
-
-  function handleSnapshot(r: QueryResult) {
-    setHistory((h) => [...h, r]);
-  }
-
-  function handleChange(visc: number, t: number) {
-    setCurrentVisc(visc);
-    setCurrentT(t);
-  }
 
   function handleDecisionAccepted() {
     if (!done) {
@@ -108,31 +46,18 @@ export function Kapitel7() {
         einem Kapitel zusammen.
       </p>
 
-      <h2>Sofort-Vorhersage</h2>
-      <p>
-        Eine gelernte Abbildung auszuwerten ist genau ein Durchlauf des
-        Modells. Deshalb fühlt sich jede Anfrage instant an, ganz egal
-        wie fein das Gitter ist.
-      </p>
-
       <h2>Parameter erkunden</h2>
       <p>
-        Drehst du an einem Regler, läuft das Modell intern einmal durch
-        und die Kurve unten passt sich an. Innerhalb des gelernten
-        Bereichs ist die Vorhersage cyan, am Rand und außerhalb färbt
-        sie sich gelb-orange, weil das Modell dort raten muss.
+        Eine gelernte Abbildung auszuwerten ist genau ein Durchlauf des
+        Modells, deshalb reagiert die Kurve unten sofort, wenn du an
+        einem Regler drehst. Innerhalb des gelernten Bereichs ist die
+        Vorhersage cyan, am Rand und außerhalb färbt sie sich
+        gelb-orange, weil das Modell dort raten muss.
       </p>
       <LivePredictionFNO
-        onSnapshot={handleSnapshot}
-        onChange={handleChange}
+        onSnapshot={() => {}}
+        onChange={() => {}}
       />
-
-      <h2>Der Konfigurationsraum</h2>
-      <p>
-        Die Karte zeigt die Cloud der Trainings-Konfigurationen aus
-        PDEBench. Dein aktueller Reglerpunkt wandert als Crosshair
-        darüber.
-      </p>
 
       <aside className="def-box">
         <strong>Interpolation</strong>
@@ -147,12 +72,6 @@ export function Kapitel7() {
         das Modell über den gelernten Bereich hinaus. Die Ausgabe sieht
         weiter plausibel aus, ist aber nicht mehr verlässlich.
       </aside>
-
-      <ConfigSpacePlot
-        history={history}
-        currentVisc={currentVisc}
-        currentT={currentT}
-      />
 
       <h2>Den Fehler lesen, zwei Ursachen</h2>
       <p>
@@ -171,22 +90,53 @@ export function Kapitel7() {
         die ersten <code>k</code> Fourier-Moden (siehe Kapitel 4 und 6).
         Funktionen mit scharfen Schockfronten brauchen gerade diese
         hohen Frequenzen. Was nicht im Frequenzraum darstellbar ist,
-        kann der FNO nicht vorhersagen.
+        kann der FNO nicht vorhersagen, egal wie lange trainiert wird.
       </p>
 
       <aside className="def-box">
         <strong>Cutoff-Maske</strong>
         Die Architektur-Stelle im FNO, an der hohe Frequenzen
         abgeschnitten werden. Drüber hinaus kann das Modell prinzipiell
-        nichts mehr darstellen, egal wie viel trainiert wird.
+        nichts mehr darstellen.
       </aside>
 
-      <ModeLensError />
+      <h2>Was sich in 2D ändert</h2>
+      <p>
+        Bisher hast du nur 1D gesehen. In zwei Dimensionen kommt
+        einiges dazu, das die Grenzen aus dem letzten Abschnitt
+        verstärkt.
+      </p>
+      <ul className="dim-jump">
+        <li>
+          <strong>Mehrere Felder gleichzeitig.</strong> Eine
+          2D-Strömung hat nicht nur eine Größe, sondern z. B. Dichte,
+          Druck und zwei Geschwindigkeits-Komponenten. Vier gekoppelte
+          Felder müssen gemeinsam vorhergesagt werden.
+        </li>
+        <li>
+          <strong>Speicher wird knapp.</strong> Ein 128 × 128-Gitter
+          hat 16-mal so viele Punkte wie ein 1D-Gitter mit 1024
+          Punkten. Bei 512 × 512 (turbulente Strömung) muss der Batch
+          auf 1 reduziert werden, damit es überhaupt rechnet.
+        </li>
+        <li>
+          <strong>Mehr Modes hilft nicht immer.</strong> In komplexen
+          2D-Strömungen kann eine höhere Modenzahl sogar schlechter
+          werden, weil die Modes auf Frequenzbänder verteilt werden, in
+          denen kaum Information liegt. Die Modenzahl muss zur
+          Frequenz-Verteilung des Problems passen.
+        </li>
+      </ul>
+      <p>
+        Genau diese Überraschungen siehst du gleich im Notebook als
+        Vergleich der vier Datensatz-Familien: eine in 1D (sauber),
+        drei in 2D (komplizierter, mit Anomalie).
+      </p>
 
       <h2>Limitationen mit dem Tutor durchgehen</h2>
       <p>
         Lass dir vom Tutor erklären, welche Klassen von Grenzen in einen
-        seriösen Übergabe-Bericht gehören — damit deine Auswahl im
+        seriösen Übergabe-Bericht gehören, damit deine Auswahl im
         Abschluss methodisch sitzt.
       </p>
       <ChatTrigger
@@ -195,21 +145,17 @@ export function Kapitel7() {
         label="Übergabe-Limitationen erklären lassen"
       />
 
-      <h2>Abschluss · Deine Empfehlung an das Team</h2>
+      <h2>Abschluss · Deine Notiz für AeroDyn</h2>
       <p>
-        Das Modell ist trainiert, der Test sieht gut aus — aber nur im
-        Trainingsbereich. Welche drei Grenzen schreibst du explizit in
-        den Übergabe-Bericht, damit AeroDyn weiß, wo das Modell endet?
-        Priya prüft jede Auswahl fachlich.
+        Schreib in eigenen Worten. Der Tutor wertet deine Antwort
+        individuell aus, du kannst sie überarbeiten und erneut einreichen.
+        Die akzeptierte Notiz landet im Project Archive als Teil des
+        Übergabe-Berichts.
       </p>
-      <DecisionPanel
+      <OpenQuestion
+        question={ABSCHLUSS_FRAGE}
+        chapter={7}
         decisionId="k7-handover"
-        outcomeLabel="Übergabe · Drei methodische Grenzen"
-        storyHook="Der Test-Fehler ist klein — die Grenzen sind es nicht. Deine Aufgabe: die drei wichtigsten Limitationen sauber dokumentieren."
-        prompt="Welche drei Limitationen kommen in den Übergabe-Bericht?"
-        options={LIMITS_DECISION_OPTIONS}
-        picksRequired={3}
-        ccReward={200}
         onAccepted={handleDecisionAccepted}
       />
 

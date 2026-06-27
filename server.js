@@ -48,8 +48,8 @@ const chapterTopics = {
   3: "Operator-Konzept: Klassisches NN vs. Neuronaler Operator (gitterunabhängig).",
   4: "Fourier Neural Operator: Architektur, Frequenz-Cutoff, Vergleich mit CNN/MLP.",
   5: "PDEBench: Standardisierte Trainingsdaten für neuronale Operatoren.",
-  6: "Parameter-Einstellung & Live-Vergleich FNO vs. klassischer Solver.",
-  7: "Fehleranalyse: Genauigkeit, Extrapolation, PINNs-Ausblick.",
+  6: "Training: Trainingsloop, vier Stellschrauben (Lernrate, Modenzahl, Loss, Epochen), Train/Val/Test-Split.",
+  7: "Ergebnis verstehen: Trainingsbereich, Cutoff-Maske, Dimensionssprung 1D→2D, Out-of-Distribution-Verhalten.",
   8: "Code & JupyterLite: PyTorch-Implementierung, Docker-Verbindung, Notebook-Aufgaben.",
 };
 

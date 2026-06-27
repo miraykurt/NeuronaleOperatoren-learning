@@ -1,68 +1,64 @@
 import { useAppStore } from "../state/store";
 import { LiveTrainingView } from "../visualizations/LiveTrainingView";
-import { LearningRateZones } from "../visualizations/LearningRateZones";
-import { TrainingModesSlider } from "../visualizations/TrainingModesSlider";
 import { ChatTrigger } from "../ui/ChatTrigger";
 import { ChapterIntro } from "../ui/ChapterIntro";
 import {
-  DecisionPanel,
-  type DecisionOption,
-} from "../ui/DecisionPanel";
+  SetupChoicePanel,
+  type SetupOption,
+} from "../ui/SetupChoicePanel";
 
 const SETUP_TUTOR_PROMPT =
-  "Bereite mich auf den Abschluss von Kapitel 6 vor: ich soll das Standard-" +
-  "Trainings-Setup für unseren FNO methodisch rechtfertigen — Adam-Optimizer " +
-  "mit einem LR-Schedule wie Cosine-Annealing, sinnvolle Modenzahl, " +
-  "ausreichende Epochen. Erklär mir kompakt, warum Adam für Spektral-Layer " +
-  "robust ist, warum ein LR-Schedule bei FNOs hilft und welche typischen " +
-  "Probleme entstehen, wenn Lernrate, Modenzahl oder Epochen falsch " +
-  "gewählt sind. Halte es knapp genug, dass ich es im Übergabe-Bericht " +
-  "zitieren kann.";
+  "Bereite mich auf den Abschluss von Kapitel 6 vor. Ich muss aus drei " +
+  "konkreten Trainings-Setups das auswählen, das tatsächlich im Notebook " +
+  "(Kapitel 8) für die 12 Experimente gefahren wird. Erklär mir kompakt, " +
+  "warum AdamW mit Cosine-Warmup-Schedule (lr=1e-3, min_lr=1e-6) für einen " +
+  "FNO sinnvoll ist, warum H1-Loss gegenüber reiner L²-Norm bei PDE-" +
+  "Lösungen hilft, warum 8 Modes ein vernünftiger Mittelwert ist (das " +
+  "Notebook variiert k zwischen 4, 8 und 16) und warum 100 Epochen reichen. " +
+  "Halte es knapp, damit ich es im Übergabe-Bericht zitieren kann.";
 
-const SETUP_DECISION_OPTIONS: DecisionOption[] = [
+const SETUP_OPTIONS: SetupOption[] = [
   {
-    id: "adam",
-    text: "Adam ist robust für Spektral-Layer — adaptive Lernraten fangen die unterschiedliche Skalierung pro Mode ab.",
-    weight: "strong",
+    id: "vorsichtig",
+    label: "Vorsichtig",
+    details: [
+      "Optimizer: AdamW, lr = 1e-5",
+      "Schedule: Cosine + Warmup",
+      "Loss: L²",
+      "Modes k = 4",
+      "Epochen = 500",
+    ],
+    isCorrect: false,
+    verdict:
+      "Die Lernrate ist zwei Größenordnungen zu klein, das Modell kommt in 500 Epochen kaum vom Fleck. Reine L²-Norm verschenkt die Information über Ableitungen, gerade in 2D-CFD ist das spürbar.",
   },
   {
-    id: "schedule",
-    text: "Ein LR-Schedule (z. B. Cosine-Annealing) lässt das Modell zu Beginn explorativ lernen und am Ende fein justieren.",
-    weight: "strong",
+    id: "standard",
+    label: "Standard",
+    details: [
+      "Optimizer: AdamW, lr = 1e-3, weight_decay = 1e-4",
+      "Schedule: Cosine + Warmup, min_lr = 1e-6",
+      "Loss: H1",
+      "Modes k = 8 (variiert: 4 / 8 / 16)",
+      "Epochen = 100",
+    ],
+    isCorrect: true,
+    verdict:
+      "Genau das Setup, mit dem das Team die 12 Experimente fährt. AdamW ist robust für Spektral-Layer, Cosine mit Warmup verhindert Divergenz am Anfang, H1 vergleicht Werte und Ableitungen, und 8 Modes liegen mittig im Standard-Bereich, das Notebook variiert k zwischen 4, 8 und 16.",
   },
   {
-    id: "baseline",
-    text: "Hyperparameter folgen der FNO-Paper-Baseline — die Ergebnisse sind vergleichbar mit publizierten Benchmarks.",
-    weight: "strong",
-  },
-  {
-    id: "no-overfit",
-    text: "Train- und Test-Loss laufen sauber parallel — kein Anzeichen von Over- oder Underfitting.",
-    weight: "strong",
-  },
-  {
-    id: "looks-ok",
-    text: "Hat im Live-Training stabil ausgesehen, kein Sägezahn-Muster im Loss.",
-    weight: "weak",
-  },
-  {
-    id: "middle-ground",
-    text: "Mittelweg zwischen aggressiv und zaghaft — fühlt sich richtig an.",
-    weight: "weak",
-  },
-  {
-    id: "lr-max",
-    text: "Höhere Lernraten konvergieren immer schneller — wir sollten sie maximieren.",
-    weight: "wrong",
-    rebuttal:
-      "Bei Spektral-Layern führt eine zu hohe LR typischerweise zu Divergenz oder oszillierendem Loss. Schneller ist nicht stabiler — und ein Schedule kann das nicht reparieren.",
-  },
-  {
-    id: "modes-max",
-    text: "Mehr Moden heißt immer mehr Genauigkeit — wir sollten den Cutoff einfach hochsetzen.",
-    weight: "wrong",
-    rebuttal:
-      "Höhere Modenzahl vervielfacht die Parameterzahl und den Trainingsbedarf. Außerhalb der trainierten Verteilung steigt die Genauigkeit dadurch nicht — Speicher und Zeit aber schon. Mehr ist nicht immer besser.",
+    id: "aggressiv",
+    label: "Aggressiv",
+    details: [
+      "Optimizer: Adam, lr = 1e-2",
+      "Schedule: keiner",
+      "Loss: MSE",
+      "Modes k = 32",
+      "Epochen = 30",
+    ],
+    isCorrect: false,
+    verdict:
+      "Lernrate ist viel zu hoch für Spektral-Layer, ohne Schedule oszilliert oder divergiert der Loss. 32 Modes blähen die Parameterzahl auf, ohne dass sich Genauigkeit garantiert verbessert. 30 Epochen sind zu kurz für ein sauberes Konvergieren.",
   },
 ];
 
@@ -93,23 +89,9 @@ export function Kapitel6() {
       <p>
         Der Trainingsloop ist immer derselbe: Eingabe rein, Vorhersage
         raus, mit der Wahrheit vergleichen, nachbessern. Mit jeder Runde
-        verschiebt sich der FNO ein Stück weit in die richtige
-        Richtung.
+        verschiebt sich der FNO ein Stück in die richtige Richtung. Genau
+        diesen Vorgang siehst du gleich live.
       </p>
-
-      <aside className="def-box">
-        <strong>Loss</strong>
-        Das Maß dafür, „wie falsch lag das Modell". In der Lerneinheit
-        nutzen wir den <em>relativen L2-Fehler</em>: die Abweichung
-        zwischen Vorhersage und Wahrheit, geteilt durch die Größe der
-        Wahrheit. Kein Formelwald, einfach ein Prozentwert.
-      </aside>
-
-      <aside className="def-box">
-        <strong>Epoche</strong>
-        Ein kompletter Durchgang durch alle Trainingspaare. Bei 1000
-        Paaren und 50 Epochen sieht das Modell den Datensatz 50 mal.
-      </aside>
 
       <h2>Live-Trainingsansicht</h2>
       <p>
@@ -121,64 +103,53 @@ export function Kapitel6() {
       </p>
       <LiveTrainingView />
 
-      <h2>Stellschraube 1: die Lernrate</h2>
+      <h2>Was im Training eingestellt wird</h2>
       <p>
-        Die Lernrate bestimmt, wie groß ein Schritt pro Update ist.
-        Drei Zonen: zu zaghaft, gut, explodiert. Schieb den Regler
-        bewusst in alle drei Bereiche und beobachte, wie der Loss
-        reagiert.
+        Vier Knöpfe legen fest, wie das Training läuft. Im Notebook in
+        Kapitel 8 siehst du die konkreten Werte, die das Team für die
+        12 Experimente gewählt hat.
       </p>
-      <LearningRateZones />
-
-      <h2>Stellschraube 2: die Anzahl der Moden</h2>
-      <p>
-        Aus Kapitel 4 weißt du: der FNO behält nur die ersten{" "}
-        <code>k</code> Fourier-Moden. Beim Training ist das nicht nur
-        eine Architekturentscheidung, sondern eine harte Grenze für das,
-        was das Modell überhaupt lernen kann.
-      </p>
+      <ul className="training-knobs">
+        <li>
+          <strong>Lernrate.</strong> Wie groß ein Schritt pro Update ist.
+          Zu groß und der Loss springt herum, zu klein und das Modell
+          kommt nicht voran. Ein Schedule senkt die Lernrate über die
+          Epochen sanft ab.
+        </li>
+        <li>
+          <strong>Modenzahl k.</strong> Wie viele Fourier-Frequenzen der
+          FNO pro Layer behält (Kapitel 4). Mehr Modes erlauben feinere
+          Strukturen, kosten aber Parameter und Speicher. Eine harte
+          obere Grenze für das, was das Modell überhaupt lernen kann.
+        </li>
+        <li>
+          <strong>Loss-Funktion.</strong> Wie streng „falsch" gemessen
+          wird. Eine reine L²-Norm vergleicht nur Werte. Eine H1-Norm
+          vergleicht zusätzlich Ableitungen und passt damit besser zu
+          PDE-Lösungen mit scharfen Übergängen, das Notebook nutzt H1
+          als Trainings-Ziel.
+        </li>
+        <li>
+          <strong>Epochen.</strong> Wie oft das Modell den
+          Trainings-Datensatz sieht. Zu wenige und es hat nicht
+          ausgelernt, zu viele und es lernt Beispiele auswendig statt
+          die Struktur (Overfitting).
+        </li>
+      </ul>
 
       <aside className="def-box">
-        <strong>Schockfront</strong>
-        Eine sehr steile, fast sprunghafte Stelle im Lösungsfeld, wie
-        eine plötzliche Wand. In Burgers entsteht so eine Front
-        natürlich, wenn die Viskosität klein ist. Solche scharfen
-        Übergänge brauchen viele Frequenzen, um sauber dargestellt zu
-        werden.
-      </aside>
-      <p>
-        Mit wenigen Moden bleibt eine scharfe Schockfront verwaschen,
-        egal wie lange du trainierst.
-      </p>
-      <TrainingModesSlider />
-
-      <h2>Stellschraube 3: die Epochen</h2>
-      <p>
-        Wie oft soll der Datensatz durchlaufen werden? Zu wenige
-        Epochen, das Modell hat noch nicht ausgelernt. Zu viele Epochen,
-        das Modell merkt sich Beispiele statt Strukturen.
-      </p>
-
-      <aside className="def-box">
-        <strong>Overfitting</strong>
-        Das Modell wird zu sehr auf die genauen Trainingsdaten
-        zugeschnitten. Trainings-Loss fällt weiter, Test-Loss steigt
-        wieder. Heißt: das Modell lernt auswendig statt zu
-        verallgemeinern.
-      </aside>
-
-      <aside className="def-box">
-        <strong>Train- und Test-Daten</strong>
-        PDEBench teilt den Datensatz in zwei Hälften. Auf den{" "}
-        <em>Train-Daten</em> wird gelernt, auf den <em>Test-Daten</em>{" "}
-        ehrlich gemessen. Solange der Test-Loss weiter fällt, ist mehr
-        Training gut, sobald er steigt, ist Schluss.
+        <strong>Train, Validierung, Test</strong>
+        PDEBench teilt den Datensatz dreigeteilt: auf{" "}
+        <em>Trainings-Paaren</em> wird gelernt, auf{" "}
+        <em>Validierungs-Paaren</em> wird nach jeder Epoche ehrlich
+        gemessen (und das beste Modell gespeichert), der{" "}
+        <em>Test-Split</em> bleibt unangetastet bis zur Endbewertung.
       </aside>
 
       <h2>Setup-Begründung mit dem Tutor durchgehen</h2>
       <p>
         Lass dir vom Tutor die methodischen Argumente für das gewählte
-        Trainings-Setup erklären — damit deine Begründung im Abschluss
+        Trainings-Setup erklären, damit deine Begründung im Abschluss
         fachlich sitzt.
       </p>
       <ChatTrigger
@@ -187,20 +158,16 @@ export function Kapitel6() {
         label="Trainings-Setup erklären lassen"
       />
 
-      <h2>Abschluss · Deine Empfehlung an das Team</h2>
+      <h2>Abschluss · Welches Setup würdest du starten?</h2>
       <p>
-        Das Trainings-Setup steht — Adam, LR-Schedule, passende Modenzahl.
-        Im Übergabe-Bericht musst du es methodisch verteidigen. Wähl die
-        drei Argumente, die du unterschreiben würdest. Priya prüft jede
-        Auswahl fachlich.
+        Drei Setups liegen auf dem Tisch. Klick das, das du dem Team empfehlen würdest.
       </p>
-      <DecisionPanel
+      <SetupChoicePanel
         decisionId="k6-training"
         outcomeLabel="Training · Standard-FNO-Setup"
-        storyHook="Adam, LR-Schedule, passende Modenzahl — das Team folgt der Standard-Empfehlung. Deine Aufgabe: die Methodik im Bericht stützen."
-        prompt="Welche drei Argumente kommen in den Übergabe-Bericht?"
-        options={SETUP_DECISION_OPTIONS}
-        picksRequired={3}
+        storyHook="Drei Karten, ein realistisches Setup, zwei Sackgassen. Genau das, was im Notebook läuft, ist die richtige Wahl."
+        prompt="Welches Trainings-Setup geht in die 12 Experimente?"
+        options={SETUP_OPTIONS}
         ccReward={180}
         onAccepted={handleDecisionAccepted}
       />

@@ -1,0 +1,17 @@
+{
+  "experiment_name": "cfd_turb_512_modes_4",
+  "dataset_name": "cfd_turb_m1_eta1e8_zeta1e8_512",
+  "path": "/data/PDEBenchDataset/2D/CFD/2D_Train_Turb/2D_CFD_Turb_M1.0_Eta1e-08_Zeta1e-08_periodic_512_Train.hdf5",
+  "dim": 2,
+  "modes": 4,
+  "epochs": 100,
+  "batch_size": 1,
+  "best_val_l2": 0.5383143991082907,
+  "final_test_l2": 0.5424892815500498,
+  "initial_test_l2": 1.000670431792736,
+  "relative_test_improvement_percent": 45.78741768374615,
+  "best_checkpoint": "/workspace/outputs/cfd_turb_512_modes_4/checkpoints/best_val.pt",
+  "loss_video": "/workspace/outputs/cfd_turb_512_modes_4/plots/loss_progress.mp4",
+  "prediction_video": "/workspace/outputs/cfd_turb_512_modes_4/samples/prediction_progress.mp4",
+  "created_at": "2026-06-18T15:51:39.313435+00:00"
+}

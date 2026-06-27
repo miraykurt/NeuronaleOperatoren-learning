@@ -1,0 +1,17 @@
+{
+  "experiment_name": "advection_beta4_modes_8",
+  "dataset_name": "advection_beta4",
+  "path": "/data/PDEBenchDataset/1D/Advection/Train/1D_Advection_Sols_beta4.0.hdf5",
+  "dim": 1,
+  "modes": 8,
+  "epochs": 100,
+  "batch_size": 64,
+  "best_val_l2": 0.068611853171736,
+  "final_test_l2": 0.07075020776599646,
+  "initial_test_l2": 0.9987869888877868,
+  "relative_test_improvement_percent": 92.91638672177925,
+  "best_checkpoint": "/workspace/outputs/advection_beta4_modes_8/checkpoints/best_val.pt",
+  "loss_video": "/workspace/outputs/advection_beta4_modes_8/plots/loss_progress.mp4",
+  "prediction_video": "/workspace/outputs/advection_beta4_modes_8/samples/prediction_progress.mp4",
+  "created_at": "2026-06-15T20:58:57.595873+00:00"
+}

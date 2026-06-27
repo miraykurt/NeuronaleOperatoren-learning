@@ -13,8 +13,8 @@ const CHAPTER_TITLES: Record<number, string> = {
   3: "Grundlagen & Konzept",
   4: "Fourier Neural Operator",
   5: "PDEBench",
-  6: "Parameter-Einstellung & Live-Vergleich",
-  7: "Fehleranalyse",
+  6: "Training",
+  7: "Ergebnis verstehen",
   8: "Code & Notebook",
 };
 
@@ -41,14 +41,14 @@ const PHASES: PhaseDef[] = [
   {
     id: "training",
     label: "Training",
-    range: [4, 5],
-    description: "FNO-Architektur, Datensatz, erste Trainingsläufe.",
+    range: [4, 6],
+    description: "FNO-Architektur, Datensatz und das Trainings-Setup.",
   },
   {
     id: "validierung",
     label: "Validierung",
-    range: [6, 7],
-    description: "Vergleich mit Solver, Fehleranalyse, Grenzen ausloten.",
+    range: [7, 7],
+    description: "Trainierten FNO erkunden, Grenzen lesen, Limitationen dokumentieren.",
   },
   {
     id: "uebergabe",
@@ -64,8 +64,8 @@ const DEADLINES: Record<number, string> = {
   3: "Konzeptpapier: Operator vs. klassisches NN",
   4: "FNO-Architektur erklären können",
   5: "Trainingsdaten-Plan mit PDEBench",
-  6: "Live-Vergleich beim Kunden",
-  7: "Fehleranalyse: Schwächen ehrlich benennen",
+  6: "Trainings-Setup für die Übergabe begründen",
+  7: "Modell-Grenzen für AeroDyn dokumentieren",
   8: "Notebook + Doku-Übergabe an FieldSolve",
 };
 

@@ -1,33 +1,57 @@
 import { useAppStore } from "../state/store";
-import { DockerDiagram } from "../visualizations/DockerDiagram";
 import { ChapterIntro } from "../ui/ChapterIntro";
+import { TrainingPipeline } from "../visualizations/TrainingPipeline";
 import { pick, LENA_AT_PROJECT_DONE } from "../state/messageTemplates";
 
-interface RetroQuestion {
+interface SelfRatingItem {
   key: string;
   label: string;
-  placeholder: string;
+  question: string;
 }
 
-const RETRO_QUESTIONS: RetroQuestion[] = [
+const SELF_RATING_ITEMS: SelfRatingItem[] = [
   {
-    key: "aha",
-    label: "1. Was war für dich der wichtigste Aha-Moment?",
-    placeholder:
-      "z. B. dass der FNO im Frequenzraum arbeitet und deshalb auflösungsunabhängig ist …",
+    key: "solver-vs-operator",
+    label: "Solver gegen Operator",
+    question:
+      "Warum löst ein neuronaler Operator das Rechenzeit-Problem klassischer Solver bei vielen Konfigurationen?",
   },
   {
-    key: "open",
-    label: "2. Wo hast du noch eine offene Frage?",
-    placeholder:
-      "z. B. wie sich das Verhalten bei 2D-Strömungen verändert …",
+    key: "operator-concept",
+    label: "Operator-Konzept",
+    question:
+      "Was ist der Unterschied zwischen einem klassischen NN (Zahl-zu-Zahl) und einem neuronalen Operator (Funktion-zu-Funktion)?",
   },
   {
-    key: "next",
-    label: "3. Was würdest du beim nächsten Projekt anders angehen?",
-    placeholder:
-      "z. B. früher den Trainingsbereich mit dem Kunden klären …",
+    key: "fno-architecture",
+    label: "FNO-Architektur",
+    question:
+      "Warum arbeitet der FNO im Frequenzraum, und welche Rolle spielt die Modenzahl k?",
   },
+  {
+    key: "training-pipeline",
+    label: "Trainings-Pipeline",
+    question:
+      "Wie wird ein FNO praktisch trainiert (Daten splitten, Loss, Optimizer, Val/Test)?",
+  },
+  {
+    key: "handover",
+    label: "Übergabe an den Kunden",
+    question:
+      "Welche Limitationen (Trainingsbereich, Mode-Cutoff, Dimensions-Grenze) muss ich ehrlich kommunizieren?",
+  },
+];
+
+interface Rating {
+  value: string;
+  emoji: string;
+  label: string;
+}
+
+const RATINGS: Rating[] = [
+  { value: "unsicher", emoji: "😕", label: "Unsicher" },
+  { value: "okay", emoji: "🙂", label: "Okay" },
+  { value: "sicher", emoji: "😄", label: "Sicher" },
 ];
 
 export function Kapitel8() {
@@ -41,16 +65,18 @@ export function Kapitel8() {
   const setRetroAnswer = useAppStore((s) => s.setRetroAnswer);
   const notebookVisited = visitedRooms.includes("notebook");
 
-  const allAnswered = RETRO_QUESTIONS.every(
-    (q) => (projectRetro[q.key] ?? "").trim().length > 0,
-  );
+  const ratedCount = SELF_RATING_ITEMS.filter(
+    (item) => (projectRetro[item.key] ?? "").length > 0,
+  ).length;
+  const totalCount = SELF_RATING_ITEMS.length;
+  const allRated = ratedCount === totalCount;
 
   function openNotebook() {
     setView({ type: "room", id: "notebook" });
   }
 
   function handleSubmit() {
-    if (done || !allAnswered) return;
+    if (done || !allRated) return;
     completeChapter(8);
     earnCC(240, "Kapitel 8 abgeschlossen");
     pushCharacterMessage("lena", pick(LENA_AT_PROJECT_DONE));
@@ -64,19 +90,92 @@ export function Kapitel8() {
         title="Die Infrastruktur und der Projekt-Retro"
       />
 
-      <h2>Die Infrastruktur sichtbar gemacht</h2>
+      <h2>Wie das echte Training abgelaufen ist</h2>
       <p>
-        Es ist dieselbe Container-Umgebung wie in Einheit 1, jetzt mit
-        echtem Inhalt: Browser, Container, Ergebnis. Klick eine Station
-        für Details.
+        Egal wie groß das Setup, ein neuronaler Operator wird immer auf
+        ähnliche Weise trainiert: Daten vorbereiten, Modell bauen, viele
+        Trainings-Runden durchlaufen, am Ende auswerten. Die 12
+        Experimente im Notebook folgen alle dieser Pipeline, klick eine Station für Details.
       </p>
-      <DockerDiagram />
+      <TrainingPipeline />
 
-      <h2>Das Notebook ansehen</h2>
+      <h2>Was dich im Notebook erwartet</h2>
       <p>
-        Bevor der Projektabschluss kommt: schau dir das vorbereitete
-        FNO-Trainings-Notebook im Notebook Terminal an. Setup, Modell,
-        Training und Auswertung — alles, was AeroDyn am Ende bekommt.
+        Das Notebook bündelt alle 12 Experimente in einer
+        VS-Code-ähnlichen Oberfläche. Damit du nicht erschlagen wirst,
+        hier vier Orientierungspunkte zum Inhalt.
+      </p>
+
+      <div className="notebook-preview">
+        <h3>Wie das Notebook aufgebaut ist</h3>
+
+        <div className="notebook-preview-grid">
+          <div className="notebook-preview-card">
+            <div className="notebook-preview-card-title">
+              12 Experimente als Tabs
+            </div>
+            <div className="notebook-preview-card-body">
+              Sortiert nach Schwierigkeit:{" "}
+              <span className="lvl-dot green" /> Einstieg (1D Advection
+              β=0.2),{" "}
+              <span className="lvl-dot yellow" /> 1D-Schock (Advection
+              β=4.0),{" "}
+              <span className="lvl-dot orange" /> 2D-Anomalie (CFD
+              Random) und{" "}
+              <span className="lvl-dot red" /> Grenze (CFD Turbulent).
+              Pro Datensatz drei Modenzahlen (4, 8, 16). Mit zunehmender
+              Modenzahl sinkt im 1D-Fall der Fehler sauber, im 2D-Fall
+              aber nicht immer.
+            </div>
+          </div>
+
+          <div className="notebook-preview-card">
+            <div className="notebook-preview-card-title">
+              Sidebar mit Projekt-Repo
+            </div>
+            <div className="notebook-preview-card-body">
+              Die echte Ordnerstruktur von <code>FNOTrainingReal/</code>:{" "}
+              <code>configs/base.yaml</code> mit den Defaults,{" "}
+              <code>configs/experiments.yaml</code> mit den 12
+              Einträgen, <code>src/train.py</code> als Entrypoint, plus
+              Dockerfile und <code>summary.json</code> pro abgeschlossenem
+              Lauf. Klick öffnet den jeweiligen Inhalt im Vorschau-Fenster.
+            </div>
+          </div>
+
+          <div className="notebook-preview-card">
+            <div className="notebook-preview-card-title">
+              Code-Cells mit echtem Output
+            </div>
+            <div className="notebook-preview-card-body">
+              Jede Cell ist eine kompakte Single-GPU-Variante der
+              entsprechenden Stelle aus <code>src/train.py</code>. Klick
+              auf eine Code-Zeile mit ⓘ öffnet eine Erklärung im rechten
+              Panel. Klick auf ▶ zeigt den echten Output aus{" "}
+              <code>outputs/&lt;experiment&gt;/</code>, samt Plots und
+              Prediction-GIF.
+            </div>
+          </div>
+
+          <div className="notebook-preview-card">
+            <div className="notebook-preview-card-title">
+              Übersicht und Lese-Reihenfolge
+            </div>
+            <div className="notebook-preview-card-body">
+              Ganz unten in der Sidebar: eine Heatmap aller 12
+              final-Test-L²-Werte über Datensatz und Modenzahl, eine
+              empfohlene Reihenfolge mit Begründung pro Schritt und drei
+              Schlüssel-Beobachtungen. Hier findest du die Anomalie, dass
+              CFD-Random bei k=8 schlechter ist als bei k=4.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Notebook öffnen</h2>
+      <p>
+        Klick öffnet das Notebook Terminal. Wenn du dir dort kurz Zeit
+        nimmst, erscheint hier unten der Projekt-Retro als Abschluss.
       </p>
       <button className="primary-button" onClick={openNotebook}>
         {notebookVisited ? "Notebook erneut öffnen" : "Notebook öffnen"}
@@ -84,44 +183,54 @@ export function Kapitel8() {
 
       {notebookVisited ? (
         <>
-          <h2>Abschluss · Projekt-Retro</h2>
+          <h2>Abschluss · Wie sicher fühlst du dich?</h2>
           <p>
-            Drei kurze Fragen am Ende, wie nach jedem echten Projekt.
-            Deine Antworten landen im Project Archive und werden mit ins
-            PDF exportiert — als persönliches Lern-Protokoll, nicht als
-            Bewertung.
+            Fünf Themen aus dem Projekt. Klick pro Thema einen Smiley.
+            Keine Bewertung, sondern eine ehrliche Selbsteinschätzung,
+            die im Project Archive mit ausgegeben wird.
           </p>
 
-          <div className="retro-form">
-            {RETRO_QUESTIONS.map((q) => (
-              <div key={q.key} className="retro-question">
-                <label className="retro-label" htmlFor={`retro-${q.key}`}>
-                  {q.label}
-                </label>
-                <textarea
-                  id={`retro-${q.key}`}
-                  className="retro-input"
-                  value={projectRetro[q.key] ?? ""}
-                  onChange={(e) => setRetroAnswer(q.key, e.target.value)}
-                  placeholder={q.placeholder}
-                  rows={3}
-                  disabled={done}
-                />
-              </div>
-            ))}
+          <div className="self-rating-form">
+            {SELF_RATING_ITEMS.map((item) => {
+              const current = projectRetro[item.key] ?? "";
+              return (
+                <div key={item.key} className="self-rating-item">
+                  <div className="self-rating-label">{item.label}</div>
+                  <div className="self-rating-question">{item.question}</div>
+                  <div className="self-rating-options">
+                    {RATINGS.map((r) => {
+                      const isActive = current === r.value;
+                      return (
+                        <button
+                          key={r.value}
+                          type="button"
+                          className={`self-rating-btn ${isActive ? "active" : ""} ${r.value}`}
+                          onClick={() => setRetroAnswer(item.key, r.value)}
+                        >
+                          <span className="self-rating-emoji">{r.emoji}</span>
+                          <span className="self-rating-text">{r.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
 
             {!done && (
-              <div className="retro-actions">
+              <div className="self-rating-actions">
                 <button
                   className="primary-button"
                   onClick={handleSubmit}
-                  disabled={!allAnswered}
+                  disabled={!allRated}
                 >
-                  Retro abgeben & Projekt übergeben
+                  Selbsteinschätzung abgeben & Projekt beenden
                 </button>
-                {!allAnswered && (
-                  <span className="retro-hint">
-                    Alle drei Felder ausfüllen, dann kannst du übergeben.
+                {!allRated && (
+                  <span className="self-rating-hint">
+                    {ratedCount} von {totalCount} Themen bewertet. Wähl
+                    für jedes Thema einen Smiley, dann kannst du den
+                    Kurs beenden.
                   </span>
                 )}
               </div>
@@ -130,21 +239,17 @@ export function Kapitel8() {
         </>
       ) : (
         <p className="chapter-hint">
-          Öffne erst das Notebook im Notebook Terminal — danach erscheint
-          hier dein Projekt-Retro.
+          Öffne erst das Notebook im Notebook Terminal, danach erscheint
+          hier dein Abschluss.
         </p>
       )}
 
       {done && (
-        <div className="chapter-done">
-          <div>
-            <div className="chapter-done-headline">
-              Kapitel 8 abgeschlossen · +240 CC · Projekt fertig
-            </div>
-            <div className="chapter-done-sub">
-              Alle acht Kapitel durch, Retro im Archive. Die Akte ist
-              bereit für den Kunden.
-            </div>
+        <div className="course-complete">
+          <div className="course-complete-sub">
+            Alle acht Kapitel durch, Selbsteinschätzung gespeichert,
+            +240 CC gutgeschrieben. Die fertige Akte liegt im Project
+            Archive.
           </div>
           <button
             className="primary-button"

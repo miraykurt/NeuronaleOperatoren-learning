@@ -12,15 +12,10 @@ import { FrequencyCutoff } from "../visualizations/FrequencyCutoff";
 import { FNOLayerFlow } from "../visualizations/FNOLayerFlow";
 import { ThreeModels } from "../visualizations/ThreeModels";
 import { PDEBenchMap } from "../visualizations/PDEBenchMap";
-import { DatasetExplorer } from "../visualizations/DatasetExplorer";
 import { TrainingPointAnimation } from "../visualizations/TrainingPointAnimation";
 import { LiveTrainingView } from "../visualizations/LiveTrainingView";
-import { LearningRateZones } from "../visualizations/LearningRateZones";
-import { TrainingModesSlider } from "../visualizations/TrainingModesSlider";
 import { LivePredictionFNO } from "../visualizations/LivePredictionFNO";
 import { ErrorHeatmap } from "../visualizations/ErrorHeatmap";
-import { ModeLensError } from "../visualizations/ModeLensError";
-import { DockerDiagram } from "../visualizations/DockerDiagram";
 
 type Category =
   | "kosten"
@@ -30,8 +25,7 @@ type Category =
   | "daten"
   | "training"
   | "praxis"
-  | "fehler"
-  | "code";
+  | "fehler";
 
 interface PlotDef {
   id: string;
@@ -51,7 +45,6 @@ const CATEGORY_LABEL: Record<Category, string> = {
   training: "Training",
   praxis: "Live-Praxis",
   fehler: "Fehleranalyse",
-  code: "Code & Infrastruktur",
 };
 
 const PLOTS: PlotDef[] = [
@@ -160,14 +153,6 @@ const PLOTS: PlotDef[] = [
     render: () => <TrainingPointAnimation />,
   },
   {
-    id: "explorer",
-    title: "Datensatz-Explorer",
-    subtitle: "Filter nach Physik, Dimension, Probenzahl. Live-Vorschau",
-    fromChapter: 5,
-    category: "daten",
-    render: () => <DatasetExplorer />,
-  },
-  {
     id: "livetrain",
     title: "Live-Training",
     subtitle: "Trainings-Loop als Animation, Loss-Kurve in Echtzeit",
@@ -176,28 +161,14 @@ const PLOTS: PlotDef[] = [
     render: () => <LiveTrainingView />,
   },
   {
-    id: "lrzones",
-    title: "Lernrate-Zonen",
-    subtitle: "Zu hoch, passend, zu niedrig — und was im Training dabei passiert",
-    fromChapter: 6,
-    category: "training",
-    render: () => <LearningRateZones />,
-  },
-  {
-    id: "tmodes",
-    title: "Trainingsmodi",
-    subtitle: "From scratch, Fine-Tuning, Transfer — Wirkung im Vergleich",
-    fromChapter: 6,
-    category: "training",
-    render: () => <TrainingModesSlider />,
-  },
-  {
     id: "livepred",
-    title: "Live-Vergleich FNO vs. Solver",
-    subtitle: "Slider, beide Antworten parallel, Zeit-Counter",
+    title: "Parameter erkunden",
+    subtitle: "Slider drehen, Vorhersage reagiert sofort. Innerhalb des Trainingsbereichs cyan, außerhalb gelb-orange.",
     fromChapter: 7,
     category: "praxis",
-    render: () => <LivePredictionFNO />,
+    render: () => (
+      <LivePredictionFNO onSnapshot={() => {}} onChange={() => {}} />
+    ),
   },
   {
     id: "errheatmap",
@@ -206,22 +177,6 @@ const PLOTS: PlotDef[] = [
     fromChapter: 7,
     category: "fehler",
     render: () => <ErrorHeatmap />,
-  },
-  {
-    id: "modelens",
-    title: "Mode-Lens",
-    subtitle: "Welche Frequenzbänder unterschätzt das Modell?",
-    fromChapter: 7,
-    category: "fehler",
-    render: () => <ModeLensError />,
-  },
-  {
-    id: "docker",
-    title: "Docker-Infrastruktur",
-    subtitle: "Browser, Container, Output, animierter Datenfluss",
-    fromChapter: 8,
-    category: "code",
-    render: () => <DockerDiagram />,
   },
 ];
 
@@ -233,9 +188,8 @@ const PARAM_LABELS: Record<string, { label: string; format?: (v: number) => stri
   draw_predict_res: { label: "Zeichnen-Demo · Anzeige", format: (v) => `${v} Punkte` },
   fourier_modes: { label: "Fourier-Zerlegung · aktive Moden", format: (v) => `${v} Moden` },
   fno_cutoff: { label: "Frequenz-Cutoff", format: (v) => `${v} Moden` },
-  modelens_cutoff: { label: "Mode-Lens · Cutoff", format: (v) => `${v} Moden` },
-  livepred_visc: { label: "Live-Vergleich · Viskosität ν", format: (v) => v.toFixed(3) },
-  livepred_t: { label: "Live-Vergleich · Zeitstempel T", format: (v) => v.toFixed(2) },
+  livepred_visc: { label: "Parameter erkunden · Viskosität ν", format: (v) => v.toFixed(3) },
+  livepred_t: { label: "Parameter erkunden · Zeitstempel T", format: (v) => v.toFixed(2) },
   errmap_visc: { label: "Fehler-Heatmap · Viskosität ν", format: (v) => v.toFixed(3) },
   errmap_t: { label: "Fehler-Heatmap · Zeitstempel T", format: (v) => v.toFixed(2) },
 };

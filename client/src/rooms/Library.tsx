@@ -24,28 +24,19 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       term: "Numerischer Solver",
       category: "methode",
       short:
-        "Klassisches Verfahren (FEM, FDM, FVM), das eine PDE auf einem Gitter Schritt für Schritt löst.",
+        "Klassisches Verfahren, das eine PDE auf einem Gitter Schritt für Schritt löst.",
       details:
-        "Solver zerlegen das Gebiet in viele Zellen, formulieren ein großes lineares Gleichungssystem und lösen es iterativ. Genau diese Berechnung will der neuronale Operator durch eine gelernte Abbildung ersetzen.",
+        "Solver wie FEM oder FDM zerlegen das Gebiet in viele kleine Zellen und lösen ein großes Gleichungssystem. Genau diese Berechnung will der neuronale Operator durch eine gelernte Abbildung ersetzen.",
       seeAlso: ["Neuronaler Operator", "Diskretisierung"],
     },
     {
       term: "Neuronaler Operator",
       category: "konzept",
       short:
-        "Modell, das die Abbildung zwischen Funktionsräumen lernt — z. B. Anfangsbedingung → Lösung — und nach dem Training in einem Forward-Pass antwortet.",
+        "Modell, das eine ganze Lösungsregel lernt: Anfangsbedingung rein, Lösung raus.",
       details:
-        "Statt für jede PDE-Instanz neu zu rechnen, lernt ein neuronaler Operator G die zugrundeliegende Regel aus Beispiel-Lösungen. Nach dem Training arbeitet er auflösungsunabhängig und liefert in Millisekunden.",
-      seeAlso: ["Operator", "Funktionenraum", "Forward-Pass"],
-    },
-    {
-      term: "Forward-Pass",
-      category: "methode",
-      short:
-        "Einmaliges Durchschicken einer Eingabe durch ein trainiertes Netz — die gesamte Inferenz eines neuronalen Operators.",
-      details:
-        "Beim FNO kostet ein Forward-Pass pro Layer eine FFT, eine Multiplikation im Frequenzraum und eine inverse FFT. Das Ergebnis steht in Millisekunden — daher die Größenordnungs-Beschleunigung gegenüber dem Solver.",
-      seeAlso: ["Inferenz"],
+        "Statt für jeden Fall neu zu rechnen, lernt der Operator aus Beispiel-Lösungen die zugrundeliegende Regel. Nach dem Training liefert er in Millisekunden eine Antwort.",
+      seeAlso: ["Operator", "Numerischer Solver"],
     },
   ],
   2: [
@@ -53,27 +44,18 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       term: "Diskretisierung",
       category: "methode",
       short:
-        "Zerlegung des kontinuierlichen Rechengebiets in ein Gitter. Voraussetzung für jeden Solver und für jeden Trainingspunkt.",
+        "Zerlegung des kontinuierlichen Gebiets in ein Gitter.",
       details:
-        "Klassische Solver brauchen die Diskretisierung zum Rechnen, neuronale Operatoren brauchen sie zum Erzeugen der Trainingsdaten. Die Diskretisierungsfeinheit bestimmt Genauigkeit und Trainingsaufwand gleichzeitig.",
+        "Klassische Solver brauchen sie zum Rechnen, neuronale Operatoren brauchen sie zum Erzeugen der Trainingsdaten. Je feiner das Gitter, desto genauer, aber auch desto teurer.",
       seeAlso: ["Komplexitätswachstum"],
     },
     {
       term: "Komplexitätswachstum",
       category: "konzept",
       short:
-        "Solver-Rechenzeit wächst polynomial mit der Auflösung (2D ~ N², 3D ~ N³ pro Achse). Die ökonomische Motivation für neuronale Operatoren.",
+        "Solver-Rechenzeit wächst stark mit der Auflösung — in 2D quadratisch, in 3D kubisch pro Achse.",
       details:
-        "Sobald viele ähnliche Konfigurationen gerechnet werden müssen, wird der klassische Weg unwirtschaftlich. Ein neuronaler Operator amortisiert den einmaligen Trainingsaufwand über viele billige Inferenzen.",
-      seeAlso: ["Echtzeit-Grenze", "Inferenz"],
-    },
-    {
-      term: "Echtzeit-Grenze",
-      category: "konzept",
-      short:
-        "Schwelle, ab der ein Verfahren zu langsam für interaktive Nutzung wird.",
-      details:
-        "Für 3D-Strömungen liegt diese Grenze beim klassischen Solver schon bei mittlerer Auflösung. Neuronale Operatoren verschieben sie um Größenordnungen — das ist der Kern ihres praktischen Werts.",
+        "Sobald viele ähnliche Konfigurationen gerechnet werden müssen, wird der klassische Weg unwirtschaftlich. Genau hier setzt der Operator-Ansatz an: einmal teuer trainieren, danach billig auswerten.",
     },
   ],
   3: [
@@ -81,28 +63,18 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       term: "Operator",
       category: "konzept",
       short:
-        "Mathematische Abbildung G : A → B zwischen zwei Funktionenräumen — anders als eine normale Funktion (Zahl → Zahl).",
+        "Mathematische Abbildung zwischen Funktionen — Eingabe ist eine ganze Funktion, Ausgabe auch.",
       details:
-        "Beispiele: Ableitungsoperator ∂/∂x, Integraloperator ∫dx, Lösungsoperator einer PDE. Genau diese Klasse von Abbildungen versucht ein neuronaler Operator zu lernen.",
-      seeAlso: ["Funktionenraum", "Neuronaler Operator"],
-    },
-    {
-      term: "Funktionenraum",
-      category: "konzept",
-      short:
-        "Menge von Funktionen mit gleichen Eigenschaften — der Eingabe- und Ausgaberaum eines Operators.",
-      details:
-        "Funktionenräume haben unendliche Dimension. Deshalb ist Operator-Lernen grundlegend anders als klassisches NN-Lernen auf festen Vektoren — und ermöglicht die Auflösungsunabhängigkeit neuronaler Operatoren.",
-      seeAlso: ["Gitterunabhängigkeit"],
+        "Anders als eine normale Funktion, die einer Zahl eine Zahl zuordnet, ordnet ein Operator einer ganzen Eingabefunktion eine ganze Ausgabefunktion zu. Beispiel: Anfangsbedingung u(x, 0) → Lösung u(x, T).",
+      seeAlso: ["Neuronaler Operator"],
     },
     {
       term: "Gitterunabhängigkeit",
       category: "konzept",
       short:
-        "Eigenschaft eines neuronalen Operators, bei verschiedenen Auflösungen konsistente Ergebnisse zu liefern.",
+        "Ein neuronaler Operator liefert bei verschiedenen Auflösungen dieselbe Lösung, nur feiner abgetastet.",
       details:
-        "Ein klassisches NN, das auf 16 Punkten trainiert wurde, versagt bei 64. Ein neuronaler Operator lernt die Regel, nicht die Werte — er liefert bei jeder Auflösung dieselbe Lösung, nur feiner abgetastet.",
-      seeAlso: ["Funktionenraum"],
+        "Ein klassisches NN, das auf 16 Punkten trainiert wurde, versagt bei 64. Der Operator lernt die Regel, nicht die Werte — das macht ihn auflösungsunabhängig.",
     },
   ],
   4: [
@@ -110,7 +82,7 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       term: "Mode",
       category: "konzept",
       short:
-        "Einzelne Frequenzkomponente im Fourier-Spektrum — die Atome, mit denen ein FNO arbeitet.",
+        "Einzelne Frequenzkomponente im Fourier-Spektrum.",
       details:
         "Niedrige Moden beschreiben grobe Strukturen, hohe Moden feine Details und meist Rauschen. Der FNO arbeitet bewusst nur mit den niedrigsten k Moden, alles darüber wird verworfen.",
       seeAlso: ["Frequenz-Cutoff", "FNO-Layer"],
@@ -119,18 +91,18 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       term: "Frequenz-Cutoff",
       category: "architektur",
       short:
-        "Anzahl k der niedrigsten Moden, die ein FNO-Layer lernt. Wichtigster Hyperparameter der Architektur.",
+        "Anzahl k der niedrigsten Moden, die der FNO behält. Wichtigster Architektur-Hyperparameter.",
       details:
-        "Hoher Cutoff: mehr Detail, mehr Speicher, mehr Trainingsbedarf. Niedriger Cutoff: glatt, billig, oversmooth. Der Sweet-Spot ist datensatz- und problemabhängig und macht den Cutoff zur ersten Stellschraube nach der Datenwahl.",
+        "Hoher Cutoff: mehr Detail, mehr Speicher, mehr Trainingsbedarf. Niedriger Cutoff: glatt und billig, aber feine Strukturen gehen verloren. Der Sweet-Spot hängt vom Problem ab.",
       seeAlso: ["Mode", "FNO-Layer"],
     },
     {
       term: "FNO-Layer",
       category: "architektur",
       short:
-        "Baustein des Fourier Neural Operator: globaler Pfad (FFT → Filter → iFFT) plus lokaler Pfad (1×1-Convolution).",
+        "Baustein des FNO: FFT, Filter im Frequenzraum, inverse FFT — plus ein lokaler Pfad.",
       details:
-        "Pro Layer wird die Eingabe in den Frequenzraum transformiert, dort mit gelernten komplexwertigen Gewichten multipliziert (nur auf den ersten k Moden), zurücktransformiert und mit dem lokalen Pfad addiert. Mehrere Layer hintereinander ergeben den FNO.",
+        "Pro Layer wird die Eingabe in den Frequenzraum transformiert, dort mit gelernten Gewichten multipliziert (nur auf den ersten k Moden), zurücktransformiert und mit dem lokalen Pfad addiert. Mehrere Layer hintereinander ergeben den FNO.",
       seeAlso: ["Mode", "Frequenz-Cutoff"],
     },
   ],
@@ -141,110 +113,71 @@ const KNOWLEDGE: Record<number, KnowledgeEntry[]> = {
       short:
         "Standardisierte Sammlung von Trainings- und Testdaten für neuronale Operatoren auf PDEs.",
       details:
-        "Enthält viele PDE-Familien (Burgers, Diffusion, Navier-Stokes, Shallow Water) mit festen Train/Test-Splits. Ohne solche Benchmarks wäre der faire Vergleich verschiedener Operator-Architekturen kaum möglich.",
-      seeAlso: ["Trainingspunkt", "Out-of-Distribution"],
+        "Enthält viele PDE-Familien (Advection, Diffusion, Navier-Stokes u. a.) mit festen Train/Val/Test-Splits. Macht den fairen Vergleich verschiedener Operator-Architekturen erst möglich.",
+      seeAlso: ["Trainingspunkt"],
     },
     {
       term: "Trainingspunkt",
       category: "daten",
       short:
-        "Ein Eingabe-Ausgabe-Paar im Datensatz: Anfangsbedingung und Konfiguration → zugehörige Lösung.",
+        "Ein Eingabe-Ausgabe-Paar im Datensatz: Anfangsbedingung → Lösung nach T Zeitschritten.",
       details:
-        "Jeder Trainingspunkt entsteht durch einen klassischen Solver-Lauf. Beim Training ist das Paar (u(x, 0), u(x, T)) nur noch ein Datenzugriff — der gesamte Solver-Aufwand steckt einmalig im Datensatz.",
-    },
-    {
-      term: "Out-of-Distribution",
-      category: "konzept",
-      short:
-        "Eingaben, die deutlich anders aussehen als die Trainingsdaten. Hier kann der Operator nicht verlässlich antworten.",
-      details:
-        "Ein neuronaler Operator interpoliert innerhalb seines Trainingsbereichs hervorragend, extrapoliert aber unzuverlässig. OOD-Eingaben müssen erkannt und bei der Übergabe an den Kunden explizit dokumentiert werden.",
-      seeAlso: ["Extrapolation", "Trainingsbereich"],
+        "Jeder Trainingspunkt entsteht durch einen klassischen Solver-Lauf. Beim Training ist das Paar nur noch ein Datenzugriff — der gesamte Solver-Aufwand steckt einmalig im Datensatz.",
     },
   ],
   6: [
     {
-      term: "Inferenz",
-      category: "konzept",
+      term: "Lernrate",
+      category: "methode",
       short:
-        "Anwendung eines trainierten Operators auf neue Eingaben. Bei neuronalen Operatoren ein einziger Forward-Pass.",
+        "Schrittweite pro Gewichts-Update beim Training.",
       details:
-        "Training ist teuer und einmalig, Inferenz ist günstig und beliebig wiederholbar. Genau dieser Asymmetrie verdankt der neuronale Operator seinen Geschwindigkeitsvorteil gegenüber dem klassischen Solver.",
-      seeAlso: ["Forward-Pass"],
+        "Zu groß: der Loss springt herum, das Modell konvergiert nicht. Zu klein: das Training kriecht. Ein Schedule (z. B. Cosine + Warmup) senkt die Lernrate über die Epochen sanft ab.",
     },
+    {
+      term: "Loss-Funktion",
+      category: "methode",
+      short:
+        "Maß dafür, wie weit die Vorhersage von der Wahrheit abweicht.",
+      details:
+        "Reines L² vergleicht nur Werte. H1 vergleicht zusätzlich Ableitungen und passt damit besser zu PDE-Lösungen mit scharfen Übergängen. Im Notebook wird H1 als Trainings-Ziel verwendet.",
+    },
+    {
+      term: "Train/Val/Test-Split",
+      category: "methode",
+      short:
+        "Datensatz wird dreigeteilt: Trainieren, Validieren, Testen.",
+      details:
+        "Auf Trainings-Paaren wird gelernt. Auf Validierungs-Paaren wird nach jeder Epoche gemessen und das beste Modell gespeichert. Der Test-Split bleibt unangetastet bis zur Endbewertung.",
+    },
+  ],
+  7: [
     {
       term: "Trainingsbereich",
       category: "konzept",
       short:
-        "Bereich des Konfigurationsraums, der durch Trainingsdaten abgedeckt ist. Innerhalb davon ist der Operator verlässlich.",
+        "Bereich der Eingaben, der durch Trainingsdaten abgedeckt ist. Innerhalb davon ist das Modell verlässlich.",
       details:
         "Außerhalb beginnt Extrapolation, und der Fehler wächst mit der Distanz zum Trainingsbereich. Für die Übergabe an den Kunden muss dieser Bereich explizit dokumentiert sein.",
-      seeAlso: ["Konfigurationsraum", "Extrapolation"],
+      seeAlso: ["Extrapolation"],
     },
-    {
-      term: "Konfigurationsraum",
-      category: "konzept",
-      short:
-        "Menge aller möglichen Eingaben des Operators, aufgespannt durch die physikalischen Parameter des Problems.",
-      details:
-        "Realistische Modelle leben in hochdimensionalen Konfigurationsräumen. Der Trainingsbereich ist meist nur ein kleiner Ausschnitt — das macht die Wahl der Trainingsdaten zur zentralen Engineering-Entscheidung.",
-      seeAlso: ["Trainingsbereich"],
-    },
-  ],
-  7: [
     {
       term: "Extrapolation",
       category: "konzept",
       short:
         "Vorhersagen außerhalb des Trainingsbereichs. Die echte Grenze neuronaler Operatoren.",
       details:
-        "Innerhalb der Trainingsverteilung arbeiten neuronale Operatoren beeindruckend gut. Sobald die Eingabe deutlich anders aussieht, kollabiert die Genauigkeit — auch wenn die Ausgabe oft plausibel wirkt.",
-      seeAlso: ["Trainingsbereich", "Out-of-Distribution"],
-    },
-    {
-      term: "Differenz-Plot",
-      category: "methode",
-      short:
-        "Operator-Vorhersage minus Referenzlösung als Heatmap. Macht systematische Fehler sichtbar.",
-      details:
-        "Wichtigstes Diagnose-Werkzeug nach dem Training. Ist der Fehler räumlich strukturiert oder zufällig? Konzentriert er sich an Hochfrequenzen, an Diskontinuitäten oder am Rand des Trainingsbereichs?",
-    },
-    {
-      term: "Fehler-Budget",
-      category: "methode",
-      short:
-        "Maximal tolerierter Fehler des Operators für einen konkreten Anwendungsfall.",
-      details:
-        "Macht aus 'wie gut ist das Modell?' eine technische Spezifikation. 5 % reicht oft für Vorerkundungen, 0,5 % für sicherheitskritische Übergaben. Erst zusammen mit dem Fehler-Budget wird klar, ob ein trainierter Operator wirklich einsatzbereit ist.",
+        "Innerhalb arbeitet das Modell zuverlässig. Sobald die Eingabe deutlich anders aussieht, kollabiert die Genauigkeit — auch wenn die Ausgabe oft plausibel wirkt.",
       seeAlso: ["Trainingsbereich"],
     },
-  ],
-  8: [
     {
-      term: "SpectralConv1d",
+      term: "Cutoff-Maske",
       category: "architektur",
       short:
-        "PyTorch-Implementierung des FNO-Layers in rund 25 Zeilen: FFT, komplexe Multiplikation mit gelernten Gewichten, inverse FFT.",
+        "Architektur-Stelle im FNO, an der hohe Frequenzen abgeschnitten werden.",
       details:
-        "Drei Hyperparameter: Eingangs-Kanäle, Ausgangs-Kanäle, Anzahl behaltener Moden. Die Gewichte sind komplexwertige Tensoren der Shape (in, out, modes) und operieren direkt im Frequenzraum — das macht die Klasse zur Kern-Schicht jedes FNO.",
-      seeAlso: ["FNO-Layer", "Frequenz-Cutoff"],
-    },
-    {
-      term: "Inferenz-Service",
-      category: "architektur",
-      short:
-        "Container, in dem das trainierte Operator-Modell live antworten kann.",
-      details:
-        "Das gespeicherte Modell wird einmal in den Speicher geladen und beantwortet Anfragen über HTTP oder WebSocket. Genau das verwandelt den Geschwindigkeitsvorteil eines neuronalen Operators in eine produktive Anwendung.",
-      seeAlso: ["Inferenz"],
-    },
-    {
-      term: "Reproduzierbare Infrastruktur",
-      category: "methode",
-      short:
-        "Docker, Lock-Dateien und Seeds halten Training und Inferenz auf jedem Rechner bit-identisch.",
-      details:
-        "Für neuronale Operatoren essenziell: Trainingsläufe müssen vergleichbar sein, der erzeugte Datensatz reproduzierbar, das deployte Modell deterministisch. Ohne diese Disziplin wird jedes Übergabeprotokoll wertlos.",
+        "Was nicht im Frequenzraum darstellbar ist, kann der FNO nicht vorhersagen — egal wie lange trainiert wird. Scharfe Schockfronten brauchen genau diese hohen Frequenzen.",
+      seeAlso: ["Frequenz-Cutoff", "Mode"],
     },
   ],
 };
@@ -255,8 +188,8 @@ const CHAPTER_TITLES: Record<number, string> = {
   3: "Grundlagen & Konzept",
   4: "Fourier Neural Operator",
   5: "PDEBench",
-  6: "Live-Vergleich",
-  7: "Fehleranalyse",
+  6: "Training",
+  7: "Ergebnis verstehen",
   8: "Code & Notebook",
 };
 

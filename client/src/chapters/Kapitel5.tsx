@@ -4,63 +4,49 @@ import { TrainingPointAnimation } from "../visualizations/TrainingPointAnimation
 import { ChapterIntro } from "../ui/ChapterIntro";
 import { ChatTrigger } from "../ui/ChatTrigger";
 import {
-  DecisionPanel,
-  type DecisionOption,
-} from "../ui/DecisionPanel";
+  FamilyRankingPanel,
+  type RankingFamily,
+} from "../ui/FamilyRankingPanel";
 
-const BURGERS_TUTOR_PROMPT =
-  "Bereite mich auf den Abschluss von Kapitel 5 vor: ich soll dem Team " +
-  "die Wahl von Burgers 1D als Trainingsdatensatz begründen. Erklär mir " +
-  "kompakt die Burgers-Gleichung ∂u/∂t + u·∂u/∂x = ν·∂²u/∂x² (was die " +
-  "Terme bedeuten, warum sie nicht-linear ist, was Schockbildung damit zu " +
-  "tun hat) und zeig mir, welche fachlich tragfähigen Argumente daraus " +
-  "folgen, warum sie ein gutes Testfeld für neuronale Operatoren ist. " +
-  "Halte es knapp genug, dass ich es im Übergabe-Bericht zitieren kann.";
+const FAMILIES_TUTOR_PROMPT =
+  "Bereite mich auf den Abschluss von Kapitel 5 vor. Erklär mir kompakt, " +
+  "welche Eigenschaft jede der vier PDE-Familien testet, die im echten " +
+  "Training auftauchen: 1D-Advection mit kleinem β (sanft, gut " +
+  "konditioniert), 1D-Advection mit großem β (Schockbildung, Test der " +
+  "Mode-Skalierung), 2D-CFD-Random (Multi-Channel, realistische " +
+  "Engineering-Komplexität), 2D-CFD-Turbulent (Grenze des Setups). Und " +
+  "warum gerade diese vier zusammen eine sinnvolle, gestaffelte Testreihe " +
+  "für einen FNO bilden. Halte es knapp, damit ich es im Übergabe-Bericht " +
+  "zitieren kann.";
 
-const DATASET_DECISION_OPTIONS: DecisionOption[] = [
+const PDE_FAMILIES: RankingFamily[] = [
   {
-    id: "shock",
-    text: "1D-Burgers zeigt nicht-lineare Schockbildung — daran lässt sich die Operator-Genauigkeit ehrlich messen.",
-    weight: "strong",
+    id: "cfd-random",
+    label: "2D-CFD-Random",
+    description:
+      "2D-Strömung mit vier Channels (Dichte, Druck, Geschwindigkeit X und Y), 128 × 128, zufällige Anfangsbedingungen. Strukturell am nächsten zu AeroDyn.",
+    rank: 1,
   },
   {
-    id: "reference",
-    text: "Validierte FEM-Referenzdaten verfügbar — direkter Vergleich FNO vs. klassischer Solver lässt sich sauber dokumentieren.",
-    weight: "strong",
+    id: "cfd-turbulent",
+    label: "2D-CFD-Turbulent",
+    description:
+      "Turbulente 2D-Strömung, 512 × 512. Sehr nah an realer Aerodynamik, aber Grenze des Setups: der FNO konvergiert nicht sauber.",
+    rank: 2,
   },
   {
-    id: "reproducible",
-    text: "Das Trainings-Notebook ist vorbereitet und läuft bit-identisch — die Übergabe ist nachvollziehbar.",
-    weight: "strong",
+    id: "advection-beta4",
+    label: "1D-Advection β=4",
+    description:
+      "1D mit Schockfront. Zeigt die Mode-Skalierung in 1D, dimensional aber weit weg von 2D-Strömungen.",
+    rank: 3,
   },
   {
-    id: "cutoff",
-    text: "Komplexität reicht, um Cutoff-Verhalten und FNO-Architektur transparent zu zeigen.",
-    weight: "strong",
-  },
-  {
-    id: "data-size",
-    text: "Datenmenge ist groß genug für saubere Generalisierung.",
-    weight: "weak",
-  },
-  {
-    id: "gpu",
-    text: "Modell-Größe passt zur lokalen GPU-Verfügbarkeit.",
-    weight: "weak",
-  },
-  {
-    id: "linear",
-    text: "Burgers ist linear und damit besonders einfach zu trainieren.",
-    weight: "wrong",
-    rebuttal:
-      "Burgers ist nicht-linear — genau das Stop-and-Go-Verhalten aus ∂ₜu + u·∂ₓu = ν·∂²ₓu ist der Schockmechanismus. Lineare PDEs wären didaktisch deutlich weniger interessant.",
-  },
-  {
-    id: "covers-3d",
-    text: "1D-Burgers deckt die 3D-Strömung um Tragflächen direkt ab.",
-    weight: "wrong",
-    rebuttal:
-      "1D-Burgers ist ein Modellproblem, kein 3D-Aerodynamik-Surrogat. Wer das so im Kundenbericht schreibt, hat einen Skandal in der Validierung.",
+    id: "advection-beta02",
+    label: "1D-Advection β=0,2",
+    description:
+      "1D, sanftes Verhalten, gut konditioniert. Didaktische Baseline, aber zu einfach für einen AeroDyn-Vergleich.",
+    rank: 4,
   },
 ];
 
@@ -116,32 +102,32 @@ export function Kapitel5() {
       </p>
       <TrainingPointAnimation />
 
-      <h2>Burgers-Gleichung mit dem Tutor durchgehen</h2>
+      <h2>Die vier Familien mit dem Tutor durchgehen</h2>
       <p>
-        Lass dir vom Tutor die Gleichung kompakt erklären — damit deine
-        Begründung im Abschluss fachlich sitzt.
+        Lass dir vom Tutor erklären, wie sich die vier PDE-Familien
+        unterscheiden und warum sie zusammen eine sinnvolle Testreihe
+        sind. Damit sitzt deine Begründung im Abschluss.
       </p>
       <ChatTrigger
         mode="tutor"
-        question={BURGERS_TUTOR_PROMPT}
-        label="Burgers-Gleichung erklären lassen"
+        question={FAMILIES_TUTOR_PROMPT}
+        label="Vier Familien erklären lassen"
       />
 
-      <h2>Abschluss · Deine Empfehlung an das Team</h2>
+      <h2>Abschluss · Rang die vier Familien für AeroDyn</h2>
       <p>
-        FieldSolve trainiert intern auf <strong>Burgers 1D</strong> — die
-        Pipeline ist vorbereitet. Im Übergabe-Bericht an AeroDyn brauchen
-        wir aber deine technische Begründung. Wähl die drei Argumente,
-        die du unterschreiben würdest. Priya prüft jede Auswahl fachlich:
-        Falsches fliegt mit Begründung raus, Schwaches reicht ihr nicht.
+        AeroDyn macht 2D-Strömungen mit vielen Konfigurationen, kein
+        1D-Spielproblem. Bring die vier PDEBench-Familien in eine
+        Rangfolge: oben die beste Eignung für den Kunden-Use-Case, unten
+        die am wenigsten geeignete. Priya prüft, ob die Reihenfolge
+        Engineering-fest sitzt.
       </p>
-      <DecisionPanel
+      <FamilyRankingPanel
         decisionId="k5-dataset"
-        outcomeLabel="Datensatz · Burgers 1D"
-        storyHook="Die Wahl ist technisch gesetzt — die Argumentation ist deine."
-        prompt="Welche drei Argumente kommen in den Übergabe-Bericht?"
-        options={DATASET_DECISION_OPTIONS}
-        picksRequired={3}
+        outcomeLabel="Empfehlung · 2D-CFD-Random"
+        storyHook="Eine Wahl pro Position, vier Plätze, alle vier müssen sitzen. Bei Fehlern markiert Priya die problematischen Stellen, du kannst neu sortieren."
+        prompt="Sortier die vier Familien von 1 (beste Eignung für AeroDyn) bis 4 (am wenigsten geeignet)."
+        families={PDE_FAMILIES}
         ccReward={160}
         onAccepted={handleDecisionAccepted}
       />

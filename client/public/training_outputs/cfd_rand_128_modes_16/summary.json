@@ -1,0 +1,17 @@
+{
+  "experiment_name": "cfd_rand_128_modes_16",
+  "dataset_name": "cfd_rand_m1_eta001_zeta001_128",
+  "path": "/data/PDEBenchDataset/2D/CFD/2D_Train_Rand/2D_CFD_Rand_M1.0_Eta0.01_Zeta0.01_periodic_128_Train.hdf5",
+  "dim": 2,
+  "modes": 16,
+  "epochs": 100,
+  "batch_size": 4,
+  "best_val_l2": 0.1822155874364078,
+  "final_test_l2": 0.18759218518957496,
+  "initial_test_l2": 1.0038965937614441,
+  "relative_test_improvement_percent": 81.31359481092606,
+  "best_checkpoint": "/workspace/outputs/cfd_rand_128_modes_16/checkpoints/best_val.pt",
+  "loss_video": "/workspace/outputs/cfd_rand_128_modes_16/plots/loss_progress.mp4",
+  "prediction_video": "/workspace/outputs/cfd_rand_128_modes_16/samples/prediction_progress.mp4",
+  "created_at": "2026-06-18T09:14:21.209833+00:00"
+}

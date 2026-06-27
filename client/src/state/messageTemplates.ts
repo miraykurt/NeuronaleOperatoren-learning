@@ -33,11 +33,11 @@ export const PRIYA_AT_CHAPTER_DONE: Record<number, readonly string[]> = {
     "PDEBench-Auswahl ist solide.",
   ],
   6: [
-    "Live-Vergleich gesehen. Notiert.",
-    "Inferenz vs. Solver verstanden.",
+    "Trainings-Setup begründet. Notiert.",
+    "Stellschrauben sitzen. Weiter.",
   ],
   7: [
-    "Fehlerbild sauber gelesen. Letzte Phase.",
+    "Grenzen sauber benannt. Letzte Phase.",
     "Modell-Vertrauen kalibriert. Gut.",
   ],
   8: [

@@ -1,4 +1,6 @@
+import { useRef, useState } from "react";
 import { BlockMath } from "react-katex";
+import html2pdf from "html2pdf.js";
 import { useAppStore, LEVELS, ACHIEVEMENTS } from "../state/store";
 import { ChatTrigger } from "../ui/ChatTrigger";
 
@@ -75,32 +77,6 @@ const NOTES_PROMPT =
   "Ideen aus dieser Lerneinheit, in einer Sprache, die ich direkt in mein " +
   "Lernheft übernehmen kann. Halte es präzise und kurz.";
 
-interface DecisionLogEntry {
-  id: string;
-  outcomeLabel: string;
-  chapter: number;
-}
-
-const DECISION_LOG: DecisionLogEntry[] = [
-  { id: "k5-dataset", outcomeLabel: "Datensatz · Burgers 1D", chapter: 5 },
-  {
-    id: "k6-training",
-    outcomeLabel: "Training · Standard-FNO-Setup",
-    chapter: 6,
-  },
-  {
-    id: "k7-handover",
-    outcomeLabel: "Übergabe · Drei methodische Grenzen",
-    chapter: 7,
-  },
-];
-
-const RETRO_LABELS: { key: string; label: string }[] = [
-  { key: "aha", label: "Wichtigster Aha-Moment" },
-  { key: "open", label: "Offene Frage" },
-  { key: "next", label: "Nächstes Projekt anders angehen" },
-];
-
 export function ProjectArchive() {
   const completedChapters = useAppStore((s) => s.completedChapters);
   const ccBalance = useAppStore((s) => s.ccBalance);
@@ -109,25 +85,45 @@ export function ProjectArchive() {
   const userNotes = useAppStore((s) => s.userNotes);
   const setUserNotes = useAppStore((s) => s.setUserNotes);
   const clearUserNotes = useAppStore((s) => s.clearUserNotes);
-  const projectDecisions = useAppStore((s) => s.projectDecisions);
-  const projectRetro = useAppStore((s) => s.projectRetro);
-
-  const committedDecisions = DECISION_LOG.filter(
-    (d) => projectDecisions[d.id] != null,
-  );
-
-  const retroEntries = RETRO_LABELS.map((r) => ({
-    label: r.label,
-    answer: (projectRetro[r.key] ?? "").trim(),
-  })).filter((r) => r.answer.length > 0);
 
   const levelLabel = LEVELS.find((l) => l.id === level)?.label ?? level;
   const totalAchievements = Object.keys(ACHIEVEMENTS).length;
+
+  const printRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   function handleClearNotes() {
     if (userNotes.trim().length === 0) return;
     if (window.confirm("Eigene Notizen wirklich verwerfen?")) {
       clearUserNotes();
+    }
+  }
+
+  async function handleDownloadPdf() {
+    if (!printRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      const options = {
+        margin: [12, 12, 12, 12] as [number, number, number, number],
+        filename: "FieldSolve_Lernakte.pdf",
+        image: { type: "jpeg" as const, quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait" as const,
+        },
+        pagebreak: { mode: ["css", "legacy"] },
+      };
+      await html2pdf()
+        .set(options)
+        .from(printRef.current)
+        .save();
+    } catch (e) {
+      console.error("PDF-Download fehlgeschlagen", e);
+      alert("PDF-Download fehlgeschlagen. Schau in die Konsole für Details.");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -137,22 +133,25 @@ export function ProjectArchive() {
       <h1>Project Archive</h1>
       <p>
         Hier landet deine Lern-Akte: die inhaltliche Zusammenfassung zu
-        neuronalen Operatoren plus deine eigenen Notizen. Die
-        Zusammenfassung selbst siehst du erst im PDF-Export — der
-        Druck-Dialog deines Browsers liefert eine Seite, die du in dein
-        Lernheft einheften kannst.
+        neuronalen Operatoren plus deine eigenen Notizen. Mit einem Klick
+        lädst du beides als PDF herunter und hast eine fertige Seite für
+        dein Lernheft.
       </p>
 
       <div className="archive-actions">
-        <button className="primary-button" onClick={() => window.print()}>
-          Als PDF exportieren
+        <button
+          className="primary-button"
+          onClick={handleDownloadPdf}
+          disabled={downloading}
+        >
+          {downloading ? "PDF wird erstellt …" : "Als PDF herunterladen"}
         </button>
         <button className="secondary-button" onClick={handleClearNotes}>
           Notizen leeren
         </button>
       </div>
 
-      <div className="archive-sheet">
+      <div className="archive-sheet archive-sheet-screen">
         <div className="archive-sheet-head">
           <div className="archive-sheet-title">FieldSolve Engineering</div>
           <div className="archive-sheet-sub">
@@ -181,76 +180,6 @@ export function ProjectArchive() {
           </ul>
         </section>
 
-        {committedDecisions.length > 0 && (
-          <section className="archive-section">
-            <h3>Deine Entscheidungen im Projekt</h3>
-            <div className="archive-decisions">
-              {committedDecisions.map((d) => {
-                const picks = projectDecisions[d.id] ?? [];
-                return (
-                  <article key={d.id} className="archive-decision">
-                    <div className="archive-decision-head">
-                      <span className="archive-decision-chapter">
-                        Kapitel {d.chapter}
-                      </span>
-                      <span className="archive-decision-outcome">
-                        {d.outcomeLabel}
-                      </span>
-                    </div>
-                    <div className="archive-decision-label">
-                      Begründet mit:
-                    </div>
-                    <ul className="archive-decision-list">
-                      {picks.map((p, i) => (
-                        <li key={i}>{p}</li>
-                      ))}
-                    </ul>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {retroEntries.length > 0 && (
-          <section className="archive-section">
-            <h3>Projekt-Retro</h3>
-            <div className="archive-retro">
-              {retroEntries.map((r) => (
-                <article key={r.label} className="archive-retro-item">
-                  <div className="archive-retro-label">{r.label}</div>
-                  <div className="archive-retro-answer">
-                    {r.answer.split("\n").map((line, i) => (
-                      <div key={i}>{line || " "}</div>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="archive-section archive-print-only">
-          <h3>Lernzusammenfassung — Neuronale Operatoren</h3>
-          <div className="archive-summary">
-            {SUMMARY.map((s) => (
-              <article key={s.heading} className="archive-summary-block">
-                <h4>{s.heading}</h4>
-                <ul>
-                  {s.bullets.map((b, i) => (
-                    <li key={i}>{b}</li>
-                  ))}
-                </ul>
-                {s.formula && (
-                  <div className="archive-summary-formula">
-                    <BlockMath math={s.formula} />
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="archive-section">
           <h3>Eigene Notizen</h3>
           <p className="archive-notes-hint">
@@ -272,27 +201,90 @@ export function ProjectArchive() {
               label="Tutor um Notiz-Hilfe bitten"
             />
           </div>
-          <div className="archive-notes-print">
-            {userNotes.trim().length > 0 ? (
-              userNotes.split("\n").map((line, i) => (
-                <div key={i} className="archive-notes-line-text">
-                  {line || " "}
-                </div>
-              ))
-            ) : (
-              <>
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-                <div className="archive-notes-line" />
-              </>
-            )}
-          </div>
         </section>
+      </div>
+
+      {/* Verstecktes Druck-Layout für den PDF-Export. Off-Screen positioniert,
+          damit html2canvas die Sektionen zuverlässig rendern kann. */}
+      <div
+        className="archive-pdf-offscreen"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-10000px",
+          top: 0,
+          width: "794px", // A4 @ 96dpi
+          background: "#ffffff",
+        }}
+      >
+        <div ref={printRef} className="archive-sheet archive-sheet-pdf">
+          <div className="archive-sheet-head">
+            <div className="archive-sheet-title">FieldSolve Engineering</div>
+            <div className="archive-sheet-sub">
+              Lern-Akte · Neuronale Operatoren für PDE-Beschleunigung
+            </div>
+          </div>
+
+          <section className="archive-section archive-meta-section">
+            <h3>Engineer:in</h3>
+            <ul>
+              <li>
+                Level: <code>{levelLabel}</code>
+              </li>
+              <li>
+                Compute Credits: <code>{ccBalance}</code>
+              </li>
+              <li>
+                Fortschritt:{" "}
+                <code>{completedChapters.length} / 8 Kapitel</code>
+              </li>
+              <li>
+                Achievements:{" "}
+                <code>
+                  {achievements.length} / {totalAchievements}
+                </code>
+              </li>
+            </ul>
+          </section>
+
+          <section className="archive-section">
+            <h3>Lernzusammenfassung — Neuronale Operatoren</h3>
+            <div className="archive-summary">
+              {SUMMARY.map((s) => (
+                <article key={s.heading} className="archive-summary-block">
+                  <h4>{s.heading}</h4>
+                  <ul>
+                    {s.bullets.map((b, i) => (
+                      <li key={i}>{b}</li>
+                    ))}
+                  </ul>
+                  {s.formula && (
+                    <div className="archive-summary-formula">
+                      <BlockMath math={s.formula} />
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="archive-section">
+            <h3>Eigene Notizen</h3>
+            <div className="archive-notes-print">
+              {userNotes.trim().length > 0 ? (
+                userNotes.split("\n").map((line, i) => (
+                  <div key={i} className="archive-notes-line-text">
+                    {line || " "}
+                  </div>
+                ))
+              ) : (
+                <div className="archive-notes-empty">
+                  (Keine eigenen Notizen eingetragen.)
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ export function NotebookTerminal() {
   const completedChapters = useAppStore((s) => s.completedChapters);
   const markNotebookExplored = useAppStore((s) => s.markNotebookExplored);
   const pushCharacterMessage = useAppStore((s) => s.pushCharacterMessage);
+  const triggerChat = useAppStore((s) => s.triggerChat);
   const setView = useAppStore((s) => s.setView);
   const available =
     completedChapters.includes(7) || completedChapters.includes(8);
@@ -27,6 +28,33 @@ export function NotebookTerminal() {
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
+
+  // Empfängt "Tutor fragen"-Buttons aus dem Notebook-iframe und öffnet
+  // den Chat mit der vom Notebook gelieferten kontext-spezifischen Frage.
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      const data = e.data;
+      if (
+        data &&
+        typeof data === "object" &&
+        data.type === "fno-notebook-tutor" &&
+        typeof data.question === "string"
+      ) {
+        const mode =
+          data.mode === "sokrates" || data.mode === "debug"
+            ? data.mode
+            : "tutor";
+        // Wenn Notebook im Fullscreen ist, würde der ChatPanel dahinter rendern
+        // und unsichtbar bleiben — also vorher Fullscreen verlassen.
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.().catch(() => {});
+        }
+        triggerChat(mode, data.question);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [triggerChat]);
 
   useEffect(() => {
     return () => {

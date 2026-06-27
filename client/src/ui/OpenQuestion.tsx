@@ -5,6 +5,7 @@ interface Props {
   question: string;
   chapter: number;
   onAccepted: () => void;
+  decisionId?: string;
 }
 
 interface EvalResponse {
@@ -43,13 +44,22 @@ async function evaluateAnswer(
   return res.json();
 }
 
-export function OpenQuestion({ question, chapter, onAccepted }: Props) {
+export function OpenQuestion({
+  question,
+  chapter,
+  onAccepted,
+  decisionId,
+}: Props) {
   const ccBalance = useAppStore((s) => s.ccBalance);
-  const [answer, setAnswer] = useState("");
+  const setProjectDecision = useAppStore((s) => s.setProjectDecision);
+  const existing = useAppStore((s) =>
+    decisionId ? s.projectDecisions[decisionId] : undefined,
+  );
+  const [answer, setAnswer] = useState(existing?.[0] ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
+  const [accepted, setAccepted] = useState(existing != null);
 
   async function submit() {
     const trimmed = answer.trim();
@@ -71,6 +81,9 @@ export function OpenQuestion({ question, chapter, onAccepted }: Props) {
 
   function accept() {
     if (accepted) return;
+    if (decisionId) {
+      setProjectDecision(decisionId, [answer.trim()]);
+    }
     setAccepted(true);
     onAccepted();
   }
