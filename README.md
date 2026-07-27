@@ -22,9 +22,10 @@ npm run build
 npm start             
 ```
 
-## Stand
+## Sonstiges
 
-**Kapitel 1–5 fertig.** Kapitel 6–8 werden noch überarbeitet (Inhalte,
-Decisions, Notebook-Anbindung).
+Dieses Repository enthält die finale Präsentation der Bachelorarbeit im Rahmen dieses Kurses.
 
+> **Hinweis zu den Videos:**  
+> Die Videos funktionieren direkt in der Präsentation nicht. Sie sind jedoch in der Arbeit entsprechend als Link verlinkt.
 
